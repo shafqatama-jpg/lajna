@@ -37,9 +37,9 @@ Both PDF and Excel files are built on the phone itself, so it also works with no
 - **Overview** — where the app opens. Headcounts per day, a majlis-by-majlis table, money collected broken down by payment method, and who is still waiting on a receipt (with an Issue button beside each name). There's a one-page summary PDF to send to the president or finance secretary.
 - **List** — add a person: name, phone, majlis, and the days they're attending. Tick all three for the whole weekend. Filter by day, search, edit, remove, or issue a receipt straight from their entry.
 - **Day lists** — pick a day (or all three) and optionally a majlis, then download or share the list as **PDF** or **Excel (.xlsx)**. Columns are No., Name, Phone, Majlis, sorted alphabetically, with the total at the end. Tick "Separate page or sheet for each majlis" to break the list up: separate pages in the PDF, separate tabs in the Excel file. Phone numbers keep their leading zero in Excel.
-- **Receipt** — pick someone from the list, tick the days they're travelling (these appear on the fare line), set the amount, sign on screen. Save, or save and share.
+- **Receipt** — pick someone from the list, tick the days they're travelling (these print on the fare line with their dates, e.g. "Coach fare — Friday 18, Saturday 19 & Sunday 20 September"), set the amount, sign on screen. The date field is the date the receipt is issued.
 - **Issued** — every receipt issued, searchable. Re-share, download, edit or delete.
-- **Setup** — defaults so each receipt is mostly pre-filled, plus storage status and backups.
+- **Setup** — defaults so each receipt is mostly pre-filled, the travel dates (set the Friday and the other two follow), plus storage status and backups.
 
 ## Sharing
 
