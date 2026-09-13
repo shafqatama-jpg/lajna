@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lajna Majlis Receipts</title>
+<meta name="theme-color" content="#123b30">
+<style>
+  :root{
+    --ink:#15211c;
+    --ink-soft:#5c6a63;
+    --paper:#ffffff;
+    --wash:#f1f5f2;
+    --green:#1f5c4a;
+    --green-deep:#123b30;
+    --line:#d6dfd9;
+    --amber:#9a6200;
+    --red:#9e3328;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);
+    background:var(--wash);
+    -webkit-text-size-adjust:100%;
+    line-height:1.45;
+  }
+  header{
+    background:var(--green-deep);
+    color:#eef4f0;
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px)*0);
+  }
+  header h1{
+    margin:0;
+    font-size:19px;
+    font-weight:600;
+    letter-spacing:.2px;
+  }
+  header p{margin:3px 0 0;font-size:13px;color:#a9c4b8}
+  nav{
+    display:flex;gap:4px;margin-top:12px;
+    background:rgba(255,255,255,.1);padding:4px;border-radius:8px;
+  }
+  nav button{
+    flex:1;border:0;background:transparent;color:#cfe0d8;
+    font:inherit;font-size:14px;font-weight:500;padding:9px 6px;border-radius:6px;cursor:pointer;
+  }
+  nav button[aria-selected="true"]{background:#fff;color:var(--green-deep)}
+  main{padding:16px 16px 120px;max-width:680px;margin:0 auto}
+  .panel{display:none}
+  .panel.on{display:block}
+  .card{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;
+  }
+  .card h2{
+    margin:0 0 12px;font-size:15px;font-weight:600;color:var(--green-deep);
+  }
+  label{display:block;font-size:13px;color:var(--ink-soft);margin:0 0 4px}
+  input,select,textarea{
+    width:100%;font:inherit;font-size:16px;color:var(--ink);
+    padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--green);outline-offset:1px;border-color:var(--green)}
+  .field{margin-bottom:12px}
+  .two{display:flex;gap:10px}
+  .two>*{flex:1;min-width:0}
+  .items{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .item{display:flex;gap:8px;padding:8px;border-bottom:1px solid var(--line);align-items:center}
+  .item:last-child{border-bottom:0}
+  .item input.desc{flex:1;min-width:0;border:0;padding:8px 6px}
+  .item input.amt{width:92px;border:0;padding:8px 6px;text-align:right}
+  .item input:focus{outline:2px solid var(--green);border-radius:6px}
+  .del{
+    border:0;background:var(--wash);color:var(--red);width:30px;height:30px;
+    border-radius:6px;font-size:17px;line-height:1;cursor:pointer;flex:none;
+  }
+  .totalbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:11px 12px;background:var(--wash);font-weight:600;
+  }
+  button.act{
+    font:inherit;font-size:15px;font-weight:600;padding:12px 14px;border-radius:8px;
+    border:1px solid var(--green-deep);background:var(--green-deep);color:#fff;cursor:pointer;
+  }
+  button.ghost{background:#fff;color:var(--green-deep)}
+  button.small{font-size:13px;padding:8px 11px;font-weight:500}
+  button.danger{border-color:var(--red);color:var(--red);background:#fff}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .bar{
+    position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;
+  }
+  .bar button{flex:1}
+  canvas#sig{width:100%;height:110px;border:1px dashed var(--line);border-radius:8px;background:#fff;touch-action:none;display:block}
+  .hist{display:flex;flex-direction:column;gap:10px}
+  .rec{
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;
+  }
+  .rec .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .rec .who{font-weight:600;font-size:15px}
+  .rec .amt{font-weight:600;font-size:15px;color:var(--green-deep);white-space:nowrap}
+  .rec .meta{font-size:13px;color:var(--ink-soft);margin-top:2px}
+  .rec .row{margin-top:11px}
+  .empty{text-align:center;color:var(--ink-soft);padding:36px 14px;font-size:14px}
+  .note{font-size:12.5px;color:var(--ink-soft);margin-top:8px}
+  .warn{background:#fdf5e6;border:1px solid #eddcb8;color:var(--amber);padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px}
+  #toast{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:86px;z-index:50;
+    background:var(--ink);color:#fff;padding:11px 16px;border-radius:22px;font-size:14px;
+    opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center;
+  }
+  #toast.on{opacity:.96}
+  details summary{cursor:pointer;font-size:14px;color:var(--green-deep);font-weight:500}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Lajna Ima'illah receipts</h1>
+  <p>Coach travel &middot; issue, save and send</p>
+  <nav role="tablist">
+    <button id="tabNew" role="tab" aria-selected="true">New receipt</button>
+    <button id="tabHist" role="tab" aria-selected="false">History</button>
+    <button id="tabSet" role="tab" aria-selected="false">Settings</button>
+  </nav>
+</header>
+
+<main>
+  <!-- NEW RECEIPT -->
+  <section class="panel on" id="pNew">
+    <div id="storeWarn" class="warn" hidden>This browser is blocking saved data, so history won't be kept. Open the page directly (not inside a preview) and allow site data.</div>
+
+    <div class="card">
+      <h2>Receipt details</h2>
+      <div class="field">
+        <label for="fMajlis">Majlis</label>
+        <input id="fMajlis" placeholder="e.g. Kingston">
+      </div>
+      <div class="two">
+        <div class="field">
+          <label for="fDate">Date</label>
+          <input id="fDate" type="date">
+        </div>
+        <div class="field">
+          <label for="fNo">Receipt no.</label>
+          <input id="fNo" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fFrom">Received from</label>
+        <input id="fFrom" placeholder="Name of person paying">
+      </div>
+      <div class="two">
+        <div class="field">
+          <label for="fMethod">Method of payment</label>
+          <select id="fMethod">
+            <option>Cash</option>
+            <option>Bank transfer</option>
+            <option>Card</option>
+            <option>Cheque</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fReceived">Total amount received</label>
+          <input id="fReceived" inputmode="decimal" placeholder="0.00">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fRef">Reference or note</label>
+        <input id="fRef" placeholder="e.g. Jalsa Salana coach, seat 12">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Details of expense</h2>
+      <div class="items" id="items"></div>
+      <div class="totalbar"><span>Total</span><span id="sum">£0.00</span></div>
+      <div class="row" style="margin-top:11px">
+        <button class="act ghost small" id="addItem">Add line</button>
+        <button class="act ghost small" id="usePreset">Use saved line</button>
+        <button class="act ghost small" id="copyTotal">Received = total</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Approval and signature</h2>
+      <div class="field">
+        <label for="fApproved">Approved by Majlis President</label>
+        <input id="fApproved" placeholder="Name">
+      </div>
+      <div class="field">
+        <label for="fBy">Received by</label>
+        <input id="fBy" placeholder="Name of officer collecting">
+      </div>
+      <div class="field">
+        <label for="sig">Signature</label>
+        <canvas id="sig" width="640" height="220"></canvas>
+        <div class="row" style="margin-top:8px">
+          <button class="act ghost small" id="clearSig">Clear signature</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="panel" id="pHist">
+    <div class="field"><input id="search" placeholder="Search by name, note or receipt no."></div>
+    <div class="hist" id="hist"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="panel" id="pSet">
+    <div class="card">
+      <h2>Defaults for every new receipt</h2>
+      <div class="field"><label for="sMajlis">Majlis</label><input id="sMajlis" placeholder="e.g. Kingston"></div>
+      <div class="field"><label for="sApproved">Majlis President</label><input id="sApproved"></div>
+      <div class="field"><label for="sBy">Received by</label><input id="sBy"></div>
+      <div class="two">
+        <div class="field"><label for="sPresetDesc">Saved expense line</label><input id="sPresetDesc" placeholder="Coach fare"></div>
+        <div class="field"><label for="sPresetAmt">Amount</label><input id="sPresetAmt" inputmode="decimal" placeholder="25.00"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="sPrefix">Receipt prefix</label><input id="sPrefix" placeholder="LJ"></div>
+        <div class="field"><label for="sNext">Next number</label><input id="sNext" inputmode="numeric" placeholder="1"></div>
+      </div>
+      <button class="act" id="saveSet">Save defaults</button>
+    </div>
+
+    <div class="card">
+      <h2>Backup</h2>
+      <p class="note" style="margin-top:0">Receipts are stored on this device only. Export a backup regularly, or if you switch phone.</p>
+      <div class="row">
+        <button class="act ghost small" id="expJson">Export backup</button>
+        <button class="act ghost small" id="expCsv">Export CSV</button>
+        <button class="act ghost small" id="impBtn">Import backup</button>
+      </div>
+      <input type="file" id="impFile" accept="application/json" hidden>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary>How sharing works</summary>
+        <p class="note">On a phone, “Share PDF” opens your normal share sheet, so you can pick WhatsApp and choose a contact. On a laptop the PDF downloads instead, and WhatsApp Web opens with a message ready — attach the downloaded file there.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<div class="bar" id="barNew">
+  <button class="act ghost" id="btnSave">Save receipt</button>
+  <button class="act" id="btnShare">Save &amp; share PDF</button>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- storage with safe fallback ---------- */
+  var mem = {}, canStore = true;
+  try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); }
+  catch(e){ canStore = false; }
+  var store = {
+    get: function(k){ try { return canStore ? localStorage.getItem(k) : (mem[k]||null); } catch(e){ return mem[k]||null; } },
+    set: function(k,v){ try { if(canStore) localStorage.setItem(k,v); else mem[k]=v; } catch(e){ mem[k]=v; } }
+  };
+  if(!canStore) document.getElementById('storeWarn').hidden = false;
+
+  var KEY = 'lajna.receipts.v1', SKEY = 'lajna.settings.v1';
+
+  function loadReceipts(){
+    try { return JSON.parse(store.get(KEY) || '[]'); } catch(e){ return []; }
+  }
+  function saveReceipts(list){ store.set(KEY, JSON.stringify(list)); }
+  function loadSettings(){
+    try {
+      return Object.assign({majlis:'',approved:'',by:'',presetDesc:'Coach fare',presetAmt:'',prefix:'LJ',next:1}, JSON.parse(store.get(SKEY)||'{}'));
+    } catch(e){ return {majlis:'',approved:'',by:'',presetDesc:'Coach fare',presetAmt:'',prefix:'LJ',next:1}; }
+  }
+  function saveSettings(s){ store.set(SKEY, JSON.stringify(s)); }
+
+  var settings = loadSettings();
+  var receipts = loadReceipts();
+  var editingId = null;
+
+  /* ---------- helpers ---------- */
+  var $ = function(id){ return document.getElementById(id); };
+  function money(n){ return '£' + (Number(n)||0).toFixed(2); }
+  function num(v){ var n = parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; }
+  function todayISO(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function ukDate(iso){
+    if(!iso) return '';
+    var p = iso.split('-'); if(p.length!==3) return iso;
+    return p[2]+'/'+p[1]+'/'+p[0];
+  }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+  var toastT;
+  function toast(msg){
+    var t=$('toast'); t.textContent=msg; t.classList.add('on');
+    clearTimeout(toastT); toastT=setTimeout(function(){ t.classList.remove('on'); }, 2600);
+  }
+
+  /* ---------- tabs ---------- */
+  var tabs = [['tabNew','pNew'],['tabHist','pHist'],['tabSet','pSet']];
+  function show(which){
+    tabs.forEach(function(t){
+      var on = t[0]===which;
+      $(t[0]).setAttribute('aria-selected', on?'true':'false');
+      $(t[1]).classList.toggle('on', on);
+    });
+    $('barNew').style.display = which==='tabNew' ? 'flex' : 'none';
+    if(which==='tabHist') renderHistory();
+    window.scrollTo(0,0);
+  }
+  tabs.forEach(function(t){ $(t[0]).addEventListener('click', function(){ show(t[0]); }); });
+
+  /* ---------- expense lines ---------- */
+  function itemRow(desc, amt){
+    var wrap = document.createElement('div');
+    wrap.className = 'item';
+    var d = document.createElement('input');
+    d.className='desc'; d.placeholder='Description'; d.value = desc||'';
+    var a = document.createElement('input');
+    a.className='amt'; a.inputMode='decimal'; a.placeholder='0.00'; a.value = amt||'';
+    var x = document.createElement('button');
+    x.className='del'; x.type='button'; x.innerHTML='&times;'; x.setAttribute('aria-label','Remove line');
+    x.addEventListener('click', function(){ wrap.remove(); if(!$('items').children.length) addLine(); recalc(); });
+    a.addEventListener('input', recalc);
+    wrap.appendChild(d); wrap.appendChild(a); wrap.appendChild(x);
+    return wrap;
+  }
+  function addLine(desc, amt){ $('items').appendChild(itemRow(desc, amt)); }
+  function getItems(){
+    var out = [];
+    Array.prototype.forEach.call($('items').children, function(row){
+      var d = row.querySelector('.desc').value.trim();
+      var a = row.querySelector('.amt').value.trim();
+      if(d || a) out.push({d:d, a:num(a)});
+    });
+    return out;
+  }
+  function total(){ return getItems().reduce(function(s,i){ return s + i.a; }, 0); }
+  function recalc(){ $('sum').textContent = money(total()); }
+
+  $('addItem').addEventListener('click', function(){ addLine(); });
+  $('usePreset').addEventListener('click', function(){
+    addLine(settings.presetDesc || 'Coach fare', settings.presetAmt || '');
+    recalc();
+  });
+  $('copyTotal').addEventListener('click', function(){ $('fReceived').value = total().toFixed(2); });
+
+  /* ---------- signature pad ---------- */
+  var cv = $('sig'), cx = cv.getContext('2d'), drawing=false, hasInk=false;
+  function fitCanvas(){
+    var r = cv.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    var data = hasInk ? cv.toDataURL() : null;
+    cv.width = Math.round(r.width*dpr); cv.height = Math.round(r.height*dpr);
+    cx.setTransform(dpr,0,0,dpr,0,0);
+    cx.lineWidth = 2; cx.lineCap='round'; cx.lineJoin='round'; cx.strokeStyle='#15211c';
+    if(data){ var img = new Image(); img.onload=function(){ cx.drawImage(img,0,0,r.width,r.height); }; img.src = data; }
+  }
+  function pos(e){ var r = cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+  cv.addEventListener('pointerdown', function(e){ drawing=true; hasInk=true; cv.setPointerCapture(e.pointerId); var p=pos(e); cx.beginPath(); cx.moveTo(p.x,p.y); });
+  cv.addEventListener('pointermove', function(e){ if(!drawing) return; var p=pos(e); cx.lineTo(p.x,p.y); cx.stroke(); });
+  cv.addEventListener('pointerup', function(){ drawing=false; });
+  cv.addEventListener('pointerleave', function(){ drawing=false; });
+  $('clearSig').addEventListener('click', function(){ cx.clearRect(0,0,cv.width,cv.height); hasInk=false; });
+  window.addEventListener('resize', fitCanvas);
+
+  function sigData(){ return hasInk ? cv.toDataURL('image/png') : ''; }
+  function setSig(dataUrl){
+    fitCanvas();
+    if(!dataUrl){ hasInk=false; return; }
+    var img = new Image();
+    img.onload = function(){ var r=cv.getBoundingClientRect(); cx.drawImage(img,0,0,r.width,r.height); hasInk=true; };
+    img.src = dataUrl;
+  }
+
+  /* ---------- form ---------- */
+  function nextNumber(){
+    var n = parseInt(settings.next,10); if(isNaN(n)||n<1) n=1;
+    return (settings.prefix||'') + String(n).padStart(4,'0');
+  }
+  function blankForm(){
+    editingId = null;
+    $('fMajlis').value = settings.majlis || '';
+    $('fDate').value = todayISO();
+    $('fNo').value = nextNumber();
+    $('fFrom').value = '';
+    $('fMethod').value = 'Cash';
+    $('fReceived').value = '';
+    $('fRef').value = '';
+    $('fApproved').value = settings.approved || '';
+    $('fBy').value = settings.by || '';
+    $('items').innerHTML = '';
+    if(settings.presetDesc || settings.presetAmt) addLine(settings.presetDesc, settings.presetAmt);
+    else addLine();
+    recalc();
+    cx.clearRect(0,0,cv.width,cv.height); hasInk=false;
+  }
+  function fillForm(r){
+    editingId = r.id;
+    $('fMajlis').value = r.majlis||'';
+    $('fDate').value = r.date||todayISO();
+    $('fNo').value = r.no||'';
+    $('fFrom').value = r.from||'';
+    $('fMethod').value = r.method||'Cash';
+    $('fReceived').value = r.received!=null ? Number(r.received).toFixed(2) : '';
+    $('fRef').value = r.ref||'';
+    $('fApproved').value = r.approved||'';
+    $('fBy').value = r.by||'';
+    $('items').innerHTML = '';
+    (r.items&&r.items.length ? r.items : [{d:'',a:''}]).forEach(function(i){ addLine(i.d, i.a===''||i.a==null?'':Number(i.a).toFixed(2)); });
+    recalc();
+    setSig(r.sig||'');
+  }
+  function readForm(){
+    return {
+      id: editingId || ('r'+Date.now()+Math.floor(Math.random()*999)),
+      no: $('fNo').value.trim(),
+      majlis: $('fMajlis').value.trim(),
+      date: $('fDate').value,
+      from: $('fFrom').value.trim(),
+      method: $('fMethod').value,
+      received: num($('fReceived').value || total()),
+      ref: $('fRef').value.trim(),
+      items: getItems(),
+      total: total(),
+      approved: $('fApproved').value.trim(),
+      by: $('fBy').value.trim(),
+      sig: sigData(),
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  function persist(r){
+    var idx = receipts.findIndex(function(x){ return x.id===r.id; });
+    if(idx >= 0) receipts[idx] = r;
+    else {
+      receipts.unshift(r);
+      var n = parseInt(settings.next,10); if(isNaN(n)) n=1;
+      settings.next = n + 1; saveSettings(settings);
+    }
+    saveReceipts(receipts);
+    editingId = r.id;
+    return r;
+  }
+
+  function validate(r){
+    if(!r.from){ toast('Add the name of the person paying'); $('fFrom').focus(); return false; }
+    if(!r.items.length){ toast('Add at least one expense line'); return false; }
+    return true;
+  }
+
+  $('btnSave').addEventListener('click', function(){
+    var r = readForm(); if(!validate(r)) return;
+    persist(r);
+    toast('Receipt ' + (r.no||'') + ' saved');
+    blankForm();
+  });
+
+  $('btnShare').addEventListener('click', function(){
+    var r = readForm(); if(!validate(r)) return;
+    persist(r);
+    sharePDF(r);
+    blankForm();
+  });
+
+  /* ---------- history ---------- */
+  function renderHistory(){
+    var q = ($('search').value||'').toLowerCase().trim();
+    var list = receipts.filter(function(r){
+      if(!q) return true;
+      return (r.from+' '+r.ref+' '+r.no+' '+r.majlis).toLowerCase().indexOf(q) >= 0;
+    });
+    var box = $('hist');
+    if(!list.length){
+      box.innerHTML = '<div class="empty">' + (receipts.length ? 'No receipts match that search.' : 'No receipts yet. Fill in the form on the New receipt tab to issue your first one.') + '</div>';
+      return;
+    }
+    box.innerHTML = list.map(function(r){
+      return '<div class="rec" data-id="'+r.id+'">'
+        + '<div class="top"><span class="who">'+esc(r.from||'(no name)')+'</span><span class="amt">'+money(r.total)+'</span></div>'
+        + '<div class="meta">'+esc(r.no||'')+' &middot; '+esc(ukDate(r.date))+' &middot; '+esc(r.method||'')+(r.ref?' &middot; '+esc(r.ref):'')+'</div>'
+        + '<div class="row">'
+        + '<button class="act ghost small" data-a="share">Share PDF</button>'
+        + '<button class="act ghost small" data-a="pdf">Download</button>'
+        + '<button class="act ghost small" data-a="edit">Edit</button>'
+        + '<button class="act ghost small" data-a="copy">Duplicate</button>'
+        + '<button class="act small danger" data-a="del">Delete</button>'
+        + '</div></div>';
+    }).join('');
+  }
+  $('search').addEventListener('input', renderHistory);
+  $('hist').addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-a]'); if(!btn) return;
+    var id = e.target.closest('.rec').getAttribute('data-id');
+    var r = receipts.find(function(x){ return x.id===id; }); if(!r) return;
+    var a = btn.getAttribute('data-a');
+    if(a==='share') sharePDF(r);
+    if(a==='pdf') downloadPDF(r);
+    if(a==='edit'){ fillForm(r); show('tabNew'); }
+    if(a==='copy'){
+      var c = JSON.parse(JSON.stringify(r));
+      c.id = null; c.from=''; c.no = nextNumber(); c.date = todayISO(); c.sig='';
+      editingId = null; fillForm(c); editingId = null; show('tabNew');
+      toast('Copied — change the name and save');
+    }
+    if(a==='del'){
+      if(!confirm('Delete receipt '+(r.no||'')+' for '+(r.from||'')+'?')) return;
+      receipts = receipts.filter(function(x){ return x.id!==id; });
+      saveReceipts(receipts); renderHistory(); toast('Receipt deleted');
+    }
+  });
+
+  /* ---------- settings ---------- */
+  function fillSettings(){
+    $('sMajlis').value = settings.majlis||'';
+    $('sApproved').value = settings.approved||'';
+    $('sBy').value = settings.by||'';
+    $('sPresetDesc').value = settings.presetDesc||'';
+    $('sPresetAmt').value = settings.presetAmt||'';
+    $('sPrefix').value = settings.prefix||'';
+    $('sNext').value = settings.next||1;
+  }
+  $('saveSet').addEventListener('click', function(){
+    settings.majlis = $('sMajlis').value.trim();
+    settings.approved = $('sApproved').value.trim();
+    settings.by = $('sBy').value.trim();
+    settings.presetDesc = $('sPresetDesc').value.trim();
+    settings.presetAmt = $('sPresetAmt').value.trim();
+    settings.prefix = $('sPrefix').value.trim();
+    var n = parseInt($('sNext').value,10); settings.next = isNaN(n)||n<1 ? 1 : n;
+    saveSettings(settings);
+    if(!editingId) blankForm();
+    toast('Defaults saved');
+  });
+
+  function dl(blob, name){
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1500);
+  }
+  $('expJson').addEventListener('click', function(){
+    dl(new Blob([JSON.stringify({settings:settings, receipts:receipts}, null, 2)], {type:'application/json'}),
+       'lajna-receipts-backup-'+todayISO()+'.json');
+  });
+  $('expCsv').addEventListener('click', function(){
+    var rows = [['Receipt','Date','Majlis','Received from','Method','Amount received','Total','Reference','Approved by','Received by','Items']];
+    receipts.forEach(function(r){
+      rows.push([r.no, ukDate(r.date), r.majlis, r.from, r.method, Number(r.received||0).toFixed(2),
+        Number(r.total||0).toFixed(2), r.ref, r.approved, r.by,
+        (r.items||[]).map(function(i){ return i.d+' '+Number(i.a||0).toFixed(2); }).join('; ')]);
+    });
+    var csv = rows.map(function(row){
+      return row.map(function(c){ return '"' + String(c==null?'':c).replace(/"/g,'""') + '"'; }).join(',');
+    }).join('\r\n');
+    dl(new Blob([csv], {type:'text/csv'}), 'lajna-receipts-'+todayISO()+'.csv');
+  });
+  $('impBtn').addEventListener('click', function(){ $('impFile').click(); });
+  $('impFile').addEventListener('change', function(e){
+    var f = e.target.files[0]; if(!f) return;
+    var fr = new FileReader();
+    fr.onload = function(){
+      try {
+        var data = JSON.parse(fr.result);
+        var incoming = data.receipts || [];
+        var ids = {}; receipts.forEach(function(r){ ids[r.id]=1; });
+        var added = 0;
+        incoming.forEach(function(r){ if(!ids[r.id]){ receipts.push(r); added++; } });
+        receipts.sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+        saveReceipts(receipts);
+        if(data.settings){ settings = Object.assign(settings, data.settings); saveSettings(settings); fillSettings(); }
+        toast(added + ' receipt' + (added===1?'':'s') + ' added');
+        renderHistory();
+      } catch(err){ toast('That file could not be read as a backup'); }
+      e.target.value = '';
+    };
+    fr.readAsText(f);
+  });
+
+  /* ---------- PDF ---------- */
+  function fileName(r){
+    var who = (r.from||'receipt').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'');
+    return 'Receipt-' + (r.no||'') + '-' + who + '.pdf';
+  }
+
+  function buildPDF(r){
+    if(!window.jspdf || !window.jspdf.jsPDF) return null;
+    var doc = new window.jspdf.jsPDF({unit:'mm', format:'a4'});
+    var L=15, W=180, labelW=62, y=20;
+
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(19);
+    doc.text("Lajna Ima'illah Majlis " + (r.majlis||''), 105, y, {align:'center'});
+    y += 8;
+
+    doc.setDrawColor(40,40,40);
+    doc.setLineWidth(0.3);
+
+    function infoRow(label, value, bold){
+      var h = 9;
+      doc.rect(L, y, labelW, h);
+      doc.rect(L+labelW, y, W-labelW, h);
+      doc.setFontSize(10.5);
+      doc.setFont('helvetica','normal');
+      doc.text(label, L+2.5, y+6);
+      doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      doc.text(String(value||''), L+labelW+2.5, y+6);
+      doc.setFont('helvetica','normal');
+      y += h;
+    }
+
+    infoRow('Date:', ukDate(r.date));
+    infoRow('Receipt no:', r.no);
+    infoRow('Received from:', r.from, true);
+    infoRow('Total Amount Received', money(r.received), true);
+    infoRow('Method of Payment:', r.method);
+    infoRow('Reference:', r.ref);
+
+    // expense table
+    var amtW = 42, detW = W - amtW, hh = 9;
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+    doc.rect(L, y, detW, hh); doc.rect(L+detW, y, amtW, hh);
+    doc.text('DETAILS OF EXPENSE', L+2.5, y+6);
+    doc.text('AMOUNT', L+detW+2.5, y+6);
+    y += hh;
+
+    doc.setFont('helvetica','normal');
+    var items = (r.items||[]).slice();
+    var minRows = 8;
+    while(items.length < minRows) items.push({d:'', a:null});
+    items.forEach(function(i){
+      var h = 8.5;
+      doc.rect(L, y, detW, h); doc.rect(L+detW, y, amtW, h);
+      if(i.d){
+        var lines = doc.splitTextToSize(String(i.d), detW-5);
+        doc.text(lines[0], L+2.5, y+5.8);
+      }
+      if(i.a!==null && i.a!==undefined && i.a!=='') doc.text(money(i.a), L+detW+amtW-2.5, y+5.8, {align:'right'});
+      y += h;
+    });
+
+    var th = 9.5;
+    doc.rect(L, y, detW, th); doc.rect(L+detW, y, amtW, th);
+    doc.setFont('helvetica','bold');
+    doc.text('TOTAL', L+detW-2.5, y+6.4, {align:'right'});
+    doc.text(money(r.total), L+detW+amtW-2.5, y+6.4, {align:'right'});
+    y += th + 4;
+
+    doc.setFont('helvetica','normal');
+    infoRow('APPROVED by Majlis President', r.approved);
+    infoRow('Received by:', r.by);
+
+    // signature row
+    var sh = 20;
+    doc.rect(L, y, labelW, sh); doc.rect(L+labelW, y, W-labelW, sh);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+    doc.text('SIGNATURE:', L+2.5, y+11);
+    doc.setFont('helvetica','normal');
+    if(r.sig){
+      try { doc.addImage(r.sig, 'PNG', L+labelW+3, y+2.5, 55, 15); } catch(e){}
+    }
+    y += sh + 6;
+
+    doc.setFontSize(8.5); doc.setTextColor(110);
+    doc.text('Issued ' + ukDate(r.date) + (r.no ? ' · Receipt ' + r.no : ''), L, y);
+    doc.setTextColor(0);
+    return doc;
+  }
+
+  function downloadPDF(r){
+    var doc = buildPDF(r);
+    if(!doc){ toast('PDF tool did not load — check your connection and refresh'); return; }
+    doc.save(fileName(r));
+    toast('PDF downloaded');
+  }
+
+  function sharePDF(r){
+    var doc = buildPDF(r);
+    if(!doc){ toast('PDF tool did not load — check your connection and refresh'); return; }
+    var blob = doc.output('blob');
+    var name = fileName(r);
+    var msg = 'Receipt ' + (r.no||'') + ' for ' + money(r.total) + ' — ' + (r.ref || 'coach travel') + '. Jazakumullah.';
+    var file;
+    try { file = new File([blob], name, {type:'application/pdf'}); } catch(e){ file = null; }
+
+    if(file && navigator.canShare && navigator.canShare({files:[file]}) && navigator.share){
+      navigator.share({ files:[file], title:'Receipt ' + (r.no||''), text: msg })
+        .then(function(){ toast('Shared'); })
+        .catch(function(err){
+          if(err && err.name === 'AbortError') return;
+          dl(blob, name);
+          toast('Sharing unavailable — PDF downloaded instead');
+        });
+    } else {
+      dl(blob, name);
+      toast('PDF downloaded — attach it in WhatsApp');
+      setTimeout(function(){
+        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+      }, 600);
+    }
+  }
+
+  /* ---------- boot ---------- */
+  fillSettings();
+  blankForm();
+  fitCanvas();
+  show('tabNew');
+})();
+</script>
+</body>
+</html>
