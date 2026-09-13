@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lajna Coach Lists &amp; Receipts</title>
+<meta name="theme-color" content="#123b30">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Coach Lists">
+<meta name="format-detection" content="telephone=no">
+<style>
+  :root{
+    --ink:#15211c; --ink-soft:#5c6a63; --paper:#fff; --wash:#f1f5f2;
+    --green:#1f5c4a; --green-deep:#123b30; --line:#d6dfd9;
+    --amber:#9a6200; --red:#9e3328; --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  html{-webkit-tap-highlight-color:rgba(18,59,48,.12)}
+  body{overscroll-behavior-y:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);background:var(--wash);-webkit-text-size-adjust:100%;line-height:1.45}
+  header{background:var(--green-deep);color:#eef4f0;
+    padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;
+    padding-left:calc(16px + env(safe-area-inset-left,0px));
+    padding-right:calc(16px + env(safe-area-inset-right,0px));
+    position:sticky;top:0;z-index:20}
+  header h1{margin:0;font-size:19px;font-weight:600;letter-spacing:.2px}
+  header p{margin:3px 0 0;font-size:13px;color:#a9c4b8}
+  nav{display:flex;gap:3px;margin-top:12px;background:rgba(255,255,255,.1);padding:4px;border-radius:8px;
+    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  nav::-webkit-scrollbar{display:none}
+  nav button{flex:1 0 auto;min-height:40px;border:0;background:transparent;color:#cfe0d8;font:inherit;
+    font-size:13.5px;font-weight:500;padding:9px 10px;border-radius:6px;cursor:pointer;white-space:nowrap}
+  nav button[aria-selected="true"]{background:#fff;color:var(--green-deep)}
+  main{max-width:680px;margin:0 auto;
+    padding:16px calc(16px + env(safe-area-inset-right,0px)) 130px calc(16px + env(safe-area-inset-left,0px))}
+  .panel{display:none}
+  .panel.on{display:block}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+  .card h2{margin:0 0 12px;font-size:15px;font-weight:600;color:var(--green-deep)}
+  label{display:block;font-size:13px;color:var(--ink-soft);margin:0 0 4px}
+  input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);
+    padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  input:focus,select:focus{outline:2px solid var(--green);outline-offset:1px;border-color:var(--green)}
+  .field{margin-bottom:12px}
+  .two{display:flex;gap:10px}
+  .two>*{flex:1;min-width:0}
+  .days{display:flex;gap:8px}
+  .days label{flex:1;margin:0;display:flex;align-items:center;justify-content:center;gap:6px;
+    border:1px solid var(--line);border-radius:8px;padding:11px 6px;font-size:14px;color:var(--ink);
+    cursor:pointer;background:#fff;user-select:none}
+  .days input{width:auto;margin:0;accent-color:var(--green-deep)}
+  .days label{min-height:46px}
+  .days label:has(input:checked),.days label.ticked{background:#e7f0eb;border-color:var(--green);font-weight:600}
+  .items{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .item{display:flex;gap:8px;padding:8px;border-bottom:1px solid var(--line);align-items:center}
+  .item:last-child{border-bottom:0}
+  .item input.desc{flex:1;min-width:0;border:0;padding:8px 6px}
+  .item input.amt{width:92px;border:0;padding:8px 6px;text-align:right}
+  .item input:focus{outline:2px solid var(--green);border-radius:6px}
+  .del{border:0;background:var(--wash);color:var(--red);width:38px;height:38px;border-radius:6px;
+    font-size:17px;line-height:1;cursor:pointer;flex:none}
+  .totalbar{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;
+    background:var(--wash);font-weight:600}
+  button.act{font:inherit;font-size:15px;font-weight:600;padding:12px 14px;border-radius:8px;
+    border:1px solid var(--green-deep);background:var(--green-deep);color:#fff;cursor:pointer}
+  button.ghost{background:#fff;color:var(--green-deep)}
+  button.small{font-size:13px;padding:10px 13px;font-weight:500}
+  button.act{min-height:44px}
+  button.danger{border-color:var(--red);color:var(--red);background:#fff}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);
+    padding:10px calc(16px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px))
+      calc(16px + env(safe-area-inset-left,0px));
+    display:none;gap:8px;z-index:20}
+  .bar.on{display:flex}
+  .bar button{flex:1}
+  canvas#sig{width:100%;height:110px;border:1px dashed var(--line);border-radius:8px;background:#fff;
+    touch-action:none;display:block}
+  .chips{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-size:13px;
+    padding:7px 12px;border-radius:20px;cursor:pointer}
+  .chip[aria-pressed="true"]{background:var(--green-deep);color:#fff;border-color:var(--green-deep)}
+  .list{display:flex;flex-direction:column;gap:9px}
+  .p{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+  .p .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .p .who{font-weight:600;font-size:15px}
+  .p .tag{font-size:12px;color:var(--green-deep);background:#e7f0eb;border-radius:20px;padding:3px 9px;white-space:nowrap}
+  .p .meta{font-size:13px;color:var(--ink-soft);margin-top:2px}
+  .p .row{margin-top:10px}
+  .rec{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px}
+  .rec .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .rec .who{font-weight:600;font-size:15px}
+  .rec .amt{font-weight:600;font-size:15px;color:var(--green-deep);white-space:nowrap}
+  .rec .meta{font-size:13px;color:var(--ink-soft);margin-top:2px}
+  .rec .row{margin-top:11px}
+  .empty{text-align:center;color:var(--ink-soft);padding:34px 14px;font-size:14px}
+  .note{font-size:12.5px;color:var(--ink-soft);margin-top:8px}
+  .warn{background:#fdf5e6;border:1px solid #eddcb8;color:var(--amber);padding:10px 12px;
+    border-radius:8px;font-size:13px;margin-bottom:14px}
+  .daycount{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:12px 0;border-bottom:1px solid var(--line)}
+  .daycount:last-of-type{border-bottom:0}
+  .daycount .n{font-size:13px;color:var(--ink-soft)}
+  .daycount strong{font-size:15px}
+  #toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--ink);
+    color:#fff;padding:11px 16px;border-radius:22px;font-size:14px;opacity:0;pointer-events:none;
+    transition:opacity .2s;max-width:90%;text-align:center}
+  #toast.on{opacity:.96}
+  details summary{cursor:pointer;font-size:14px;color:var(--green-deep);font-weight:500}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px}
+  .stat .n{font-size:23px;font-weight:600;color:var(--green-deep);line-height:1.15}
+  .stat .l{font-size:12.5px;color:var(--ink-soft);margin-top:3px}
+  .stat.wide{grid-column:1 / -1}
+  .barrow{margin:11px 0}
+  .barrow .t{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;margin-bottom:5px}
+  .barrow .t span:last-child{color:var(--ink-soft);white-space:nowrap}
+  .track{height:9px;background:var(--wash);border-radius:6px;overflow:hidden}
+  .fill{height:100%;background:var(--green);border-radius:6px}
+  table.mini{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.mini th{text-align:left;font-weight:600;color:var(--ink-soft);font-size:12.5px;padding:7px 4px;border-bottom:1px solid var(--line)}
+  table.mini td{padding:8px 4px;border-bottom:1px solid var(--line)}
+  table.mini tr:last-child td{border-bottom:0}
+  table.mini .num{text-align:right;white-space:nowrap}
+  .owe{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .owe:last-child{border-bottom:0}
+  .owe .nm{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ok{color:var(--green-deep);font-weight:600}
+  .bad{color:var(--amber);font-weight:600}
+  @media (max-width:360px){
+    nav button{font-size:13px;padding:9px 8px}
+    .card{padding:14px}
+    main{padding-left:12px;padding-right:12px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Coach lists &amp; receipts</h1>
+  <p>Lajna Ima'illah &middot; Friday, Saturday, Sunday</p>
+  <nav role="tablist">
+    <button id="tabDash" role="tab" aria-selected="true">Overview</button>
+    <button id="tabPeople" role="tab" aria-selected="false">List</button>
+    <button id="tabDays" role="tab" aria-selected="false">Day lists</button>
+    <button id="tabRec" role="tab" aria-selected="false">Receipt</button>
+    <button id="tabHist" role="tab" aria-selected="false">Issued</button>
+    <button id="tabSet" role="tab" aria-selected="false">Setup</button>
+  </nav>
+</header>
+
+<main>
+  <!-- DASHBOARD -->
+  <section class="panel on" id="pDash">
+    <div class="stats" id="statGrid"></div>
+
+    <div class="card">
+      <h2>People per day</h2>
+      <div id="dashDays"></div>
+    </div>
+
+    <div class="card">
+      <h2>By majlis</h2>
+      <div id="dashMajlis"></div>
+    </div>
+
+    <div class="card">
+      <h2>Money collected</h2>
+      <div id="dashMoney"></div>
+    </div>
+
+    <div class="card">
+      <h2>Still to be issued a receipt</h2>
+      <div id="dashOwing"></div>
+    </div>
+
+    <div class="card">
+      <h2>Summary</h2>
+      <div class="row">
+        <button class="act ghost small" id="btnSummaryPdf">Download summary PDF</button>
+        <button class="act ghost small" id="btnSummaryShare">Share summary</button>
+      </div>
+      <p class="note">A one-page overview of the headcounts, the majalis and the money, for the president or the finance secretary.</p>
+    </div>
+  </section>
+
+  <!-- PEOPLE -->
+  <section class="panel" id="pPeople">
+    <div id="storeWarn" class="warn" hidden>This browser is blocking saved data, so nothing will be kept. Open the page directly (not inside a preview) and allow site data.</div>
+
+    <div class="card">
+      <h2 id="formTitle">Add to the list</h2>
+      <div class="field"><label for="pName">Name</label><input id="pName" placeholder="Full name" autocomplete="name"></div>
+      <div class="two">
+        <div class="field"><label for="pPhone">Phone number</label><input id="pPhone" type="tel" inputmode="tel" placeholder="07…"></div>
+        <div class="field"><label for="pMajlis">Majlis</label><input id="pMajlis" placeholder="e.g. Kingston" autocomplete="off" list="majlisList"></div>
+      </div>
+      <datalist id="majlisList"></datalist>
+      <div class="field">
+        <label>Days attending</label>
+        <div class="days">
+          <label><input type="checkbox" id="dFri"> Fri</label>
+          <label><input type="checkbox" id="dSat"> Sat</label>
+          <label><input type="checkbox" id="dSun"> Sun</label>
+        </div>
+      </div>
+      <div class="row">
+        <button class="act" id="pSave" style="flex:1">Add to list</button>
+        <button class="act ghost" id="pCancel" hidden>Cancel</button>
+      </div>
+    </div>
+
+    <div class="chips" id="filterChips">
+      <button class="chip" data-day="all" aria-pressed="true">All</button>
+      <button class="chip" data-day="fri" aria-pressed="false">Friday</button>
+      <button class="chip" data-day="sat" aria-pressed="false">Saturday</button>
+      <button class="chip" data-day="sun" aria-pressed="false">Sunday</button>
+    </div>
+    <div class="two">
+      <div class="field">
+        <label for="pMajlisFilter">Majlis</label>
+        <select id="pMajlisFilter"><option value="">All majalis</option></select>
+      </div>
+      <div class="field"><label for="pSearch">Search</label><input id="pSearch" placeholder="Name or phone"></div>
+    </div>
+    <div class="list" id="peopleList"></div>
+  </section>
+
+  <!-- DAY LISTS -->
+  <section class="panel" id="pDays">
+    <div class="card">
+      <h2>Export a list</h2>
+      <div class="field">
+        <label>Day</label>
+        <div class="chips" id="exportDays">
+          <button class="chip" data-day="fri" aria-pressed="true">Friday</button>
+          <button class="chip" data-day="sat" aria-pressed="false">Saturday</button>
+          <button class="chip" data-day="sun" aria-pressed="false">Sunday</button>
+          <button class="chip" data-day="all" aria-pressed="false">All three</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="majlisFilter">Majlis</label>
+        <select id="majlisFilter"><option value="">All majalis</option></select>
+      </div>
+      <div class="field days" id="splitWrap">
+        <label><input type="checkbox" id="splitMajlis"> Separate page or sheet for each majlis</label>
+      </div>
+      <div id="dayCounts"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="act" id="btnPdf" style="flex:1">Download PDF</button>
+        <button class="act ghost" id="btnXls" style="flex:1">Download Excel</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="act ghost small" id="btnSharePdf">Share PDF</button>
+        <button class="act ghost small" id="btnShareXls">Share Excel</button>
+      </div>
+      <p class="note">Both formats show No., Name, Phone and Majlis, sorted alphabetically, with the total at the end. Excel opens in Excel, Numbers or Google Sheets.</p>
+    </div>
+  </section>
+
+  <!-- RECEIPT -->
+  <section class="panel" id="pRec">
+    <div class="card">
+      <h2>Receipt details</h2>
+      <div class="field">
+        <label for="fPerson">Issue to</label>
+        <select id="fPerson"><option value="">Type a name below</option></select>
+      </div>
+      <div class="field"><label for="fFrom">Received from</label><input id="fFrom" placeholder="Name of person paying"></div>
+      <div class="field">
+        <label>Days travelling</label>
+        <div class="days">
+          <label><input type="checkbox" id="rFri"> Fri</label>
+          <label><input type="checkbox" id="rSat"> Sat</label>
+          <label><input type="checkbox" id="rSun"> Sun</label>
+        </div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="fMajlis">Majlis (page heading)</label><input id="fMajlis" placeholder="e.g. Kingston"></div>
+        <div class="field"><label for="fDate">Date</label><input id="fDate" type="date"></div>
+      </div>
+      <div class="two">
+        <div class="field">
+          <label for="fMethod">Method of payment</label>
+          <select id="fMethod"><option>Cash</option><option>Bank transfer</option><option>Card</option><option>Cheque</option></select>
+        </div>
+        <div class="field"><label for="fReceived">Total amount received</label><input id="fReceived" inputmode="decimal" placeholder="0.00"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Details of expense</h2>
+      <div class="items" id="items"></div>
+      <div class="totalbar"><span>Total</span><span id="sum">£0.00</span></div>
+      <div class="row" style="margin-top:11px">
+        <button class="act ghost small" id="addItem">Add line</button>
+        <button class="act ghost small" id="usePreset">Use saved line</button>
+        <button class="act ghost small" id="copyTotal">Received = total</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Approval and signature</h2>
+      <div class="field"><label for="fApproved">Approved by Majlis President</label><input id="fApproved" placeholder="Name"></div>
+      <div class="field"><label for="fBy">Received by</label><input id="fBy" placeholder="Name of officer collecting"></div>
+      <div class="field">
+        <label for="sig">Signature</label>
+        <canvas id="sig" width="640" height="220"></canvas>
+        <div class="row" style="margin-top:8px"><button class="act ghost small" id="clearSig">Clear signature</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECEIPT HISTORY -->
+  <section class="panel" id="pHist">
+    <div class="field"><input id="search" placeholder="Search receipts by name"></div>
+    <div class="list" id="hist"></div>
+  </section>
+
+  <!-- SETUP -->
+  <section class="panel" id="pSet">
+    <div class="card">
+      <h2>Defaults for every new receipt</h2>
+      <div class="field"><label for="sMajlis">Majlis</label><input id="sMajlis" placeholder="e.g. Kingston"></div>
+      <div class="field"><label for="sApproved">Majlis President</label><input id="sApproved"></div>
+      <div class="field"><label for="sBy">Received by</label><input id="sBy"></div>
+      <div class="two">
+        <div class="field"><label for="sPresetDesc">Saved expense line</label><input id="sPresetDesc" placeholder="Coach fare"></div>
+        <div class="field"><label for="sPresetAmt">Amount</label><input id="sPresetAmt" inputmode="decimal" placeholder="25.00"></div>
+      </div>
+      <div class="field"><label for="sEvent">Event name on day lists</label><input id="sEvent" placeholder="e.g. Jalsa Salana coach"></div>
+      <button class="act" id="saveSet">Save defaults</button>
+    </div>
+
+    <div class="card">
+      <h2>Keeping the data safe</h2>
+      <div id="storageInfo" class="note" style="margin-top:0"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="act ghost small" id="btnPersist">Protect this data</button>
+        <button class="act ghost small" id="btnHowInstall">Add to home screen</button>
+      </div>
+      <p class="note">Phones clear the data of ordinary web pages that sit unused. Adding the app to your home screen and tapping Protect this data stops that happening.</p>
+    </div>
+
+    <div class="card">
+      <h2>Backup</h2>
+      <p class="note" style="margin-top:0">The list and receipts are stored on this device only. Export a backup regularly, or if you switch phone.</p>
+      <div class="row">
+        <button class="act ghost small" id="expJson">Export backup</button>
+        <button class="act ghost small" id="expPeopleCsv">People CSV</button>
+        <button class="act ghost small" id="expCsv">Receipts CSV</button>
+        <button class="act ghost small" id="impBtn">Import backup</button>
+      </div>
+      <input type="file" id="impFile" accept="application/json" hidden>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary>How sharing works</summary>
+        <p class="note">On a phone, Share opens your normal share sheet, so you can pick WhatsApp and choose a contact. On a laptop the PDF downloads instead and WhatsApp Web opens with a message ready — attach the downloaded file there.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<div class="bar" id="barRec">
+  <button class="act ghost" id="btnSave">Save receipt</button>
+  <button class="act" id="btnShare">Save &amp; share PDF</button>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- storage ---------- */
+  var mem = {}, canStore = true;
+  try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); } catch(e){ canStore = false; }
+  var store = {
+    get:function(k){ try{ return canStore?localStorage.getItem(k):(mem[k]||null); }catch(e){ return mem[k]||null; } },
+    set:function(k,v){ try{ if(canStore) localStorage.setItem(k,v); else mem[k]=v; }catch(e){ mem[k]=v; } }
+  };
+  if(!canStore) document.getElementById('storeWarn').hidden = false;
+
+  var RKEY='lajna.receipts.v1', PKEY='lajna.people.v1', SKEY='lajna.settings.v1';
+  function jparse(s,f){ try{ return JSON.parse(s)||f; }catch(e){ return f; } }
+
+  var receipts = jparse(store.get(RKEY), []);
+  var people   = jparse(store.get(PKEY), []);
+  var settings = Object.assign(
+    {majlis:'',approved:'',by:'',presetDesc:'Coach fare',presetAmt:'',event:''},
+    jparse(store.get(SKEY), {}));
+
+  function touched(){
+    if(window.__renderStorage) window.__renderStorage();
+    if(window.__renderDash && $('pDash').classList.contains('on')) window.__renderDash();
+  }
+  function saveR(){ store.set(RKEY, JSON.stringify(receipts)); touched(); }
+  function saveP(){ store.set(PKEY, JSON.stringify(people)); touched(); }
+  function saveS(){ store.set(SKEY, JSON.stringify(settings)); }
+
+  var editingReceipt = null, editingPerson = null, filterDay = 'all';
+
+  /* ---------- helpers ---------- */
+  var $ = function(id){ return document.getElementById(id); };
+  function money(n){ return '\u00A3' + (Number(n)||0).toFixed(2); }
+  function num(v){ var n = parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; }
+  function todayISO(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function ukDate(iso){ if(!iso) return ''; var p=String(iso).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : iso; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+  function byName(a,b){ return String(a.name||'').localeCompare(String(b.name||''), 'en', {sensitivity:'base'}); }
+  var DAYS = {fri:'Friday', sat:'Saturday', sun:'Sunday'};
+  var toastT;
+  function toast(msg){
+    var t=$('toast'); t.textContent=msg; t.classList.add('on');
+    clearTimeout(toastT); toastT=setTimeout(function(){ t.classList.remove('on'); },2600);
+  }
+  function dl(blob,name){
+    var url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); },1500);
+  }
+  function safe(s){ return String(s||'file').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,''); }
+
+  /* ---------- tabs ---------- */
+  var tabs=[['tabDash','pDash'],['tabPeople','pPeople'],['tabDays','pDays'],['tabRec','pRec'],['tabHist','pHist'],['tabSet','pSet']];
+  function show(which){
+    tabs.forEach(function(t){
+      var on = t[0]===which;
+      $(t[0]).setAttribute('aria-selected', on?'true':'false');
+      $(t[1]).classList.toggle('on', on);
+    });
+    $('barRec').classList.toggle('on', which==='tabRec');
+    if(which==='tabDash') renderDash();
+    if(which==='tabPeople') renderPeople();
+    if(which==='tabDays') renderCounts();
+    if(which==='tabHist') renderHistory();
+    if(which==='tabRec') fillPersonSelect();
+    window.scrollTo(0,0);
+  }
+  tabs.forEach(function(t){ $(t[0]).addEventListener('click', function(){ show(t[0]); }); });
+
+  /* ---------- people ---------- */
+  function personDays(p){ return ['fri','sat','sun'].filter(function(d){ return p.days && p.days[d]; }); }
+  function daysLabel(p){
+    var d = personDays(p);
+    if(d.length===3) return 'All 3 days';
+    if(!d.length) return 'No day set';
+    return d.map(function(k){ return DAYS[k].slice(0,3); }).join(', ');
+  }
+  var NOMAJ = '\u0000none';
+  function majlisOf(p){ return String(p.majlis||'').trim(); }
+  function matchMajlis(p, m){
+    if(!m) return true;
+    if(m===NOMAJ) return !majlisOf(p);
+    return majlisOf(p).toLowerCase() === String(m).toLowerCase();
+  }
+  function majlisLabel(m){ return m===NOMAJ ? 'No majlis recorded' : m; }
+  function peopleFor(day, m){
+    return people.filter(function(p){
+      return (day==='all' ? true : (p.days && p.days[day])) && matchMajlis(p, m);
+    });
+  }
+  function allMajalis(){
+    var seen={}, out=[];
+    people.forEach(function(p){
+      var m = majlisOf(p);
+      if(m && !seen[m.toLowerCase()]){ seen[m.toLowerCase()]=1; out.push(m); }
+    });
+    out.sort(function(a,b){ return a.localeCompare(b,'en',{sensitivity:'base'}); });
+    return out;
+  }
+  function fillMajlisSelects(){
+    var opts = allMajalis().map(function(m){ return '<option value="'+esc(m)+'">'+esc(m)+'</option>'; }).join('');
+    var none = people.some(function(p){ return !majlisOf(p); })
+      ? '<option value="'+NOMAJ+'">No majlis recorded</option>' : '';
+    ['pMajlisFilter','majlisFilter'].forEach(function(id){
+      var sel=$(id); if(!sel) return;
+      var keep = sel.value;
+      sel.innerHTML = '<option value="">All majalis</option>' + opts + none;
+      sel.value = keep;
+      if(sel.value !== keep) sel.value = '';
+    });
+  }
+  function exportMajlis(){ var s2=$('majlisFilter'); return s2 ? s2.value : ''; }
+  function clearPersonForm(){
+    editingPerson = null;
+    $('pName').value=''; $('pPhone').value=''; $('pMajlis').value = settings.majlis || '';
+    $('dFri').checked=false; $('dSat').checked=false; $('dSun').checked=false; syncTicks();
+    $('formTitle').textContent='Add to the list';
+    $('pSave').textContent='Add to list';
+    $('pCancel').hidden = true;
+  }
+  $('pCancel').addEventListener('click', clearPersonForm);
+
+  $('pSave').addEventListener('click', function(){
+    var name = $('pName').value.trim();
+    if(!name){ toast('Enter a name'); $('pName').focus(); return; }
+    var days = {fri:$('dFri').checked, sat:$('dSat').checked, sun:$('dSun').checked};
+    if(!days.fri && !days.sat && !days.sun){ toast('Tick at least one day'); return; }
+    var rec = {
+      id: editingPerson || ('p'+Date.now()+Math.floor(Math.random()*999)),
+      name: name,
+      phone: $('pPhone').value.trim(),
+      majlis: $('pMajlis').value.trim(),
+      days: days,
+      createdAt: new Date().toISOString()
+    };
+    var i = people.findIndex(function(x){ return x.id===rec.id; });
+    if(i>=0) people[i] = Object.assign(people[i], rec); else people.push(rec);
+    saveP();
+    toast(i>=0 ? 'Details updated' : name + ' added');
+    clearPersonForm();
+    renderPeople(); refreshMajlisList();
+    $('pName').focus();
+  });
+
+  function refreshMajlisList(){
+    fillMajlisSelects();
+    var seen = {}, out = [];
+    people.forEach(function(p){ if(p.majlis && !seen[p.majlis]){ seen[p.majlis]=1; out.push(p.majlis); } });
+    $('majlisList').innerHTML = out.map(function(m){ return '<option value="'+esc(m)+'">'; }).join('');
+  }
+
+  function renderPeople(){
+    var q = ($('pSearch').value||'').toLowerCase().trim();
+    var list = peopleFor(filterDay, $('pMajlisFilter').value).filter(function(p){
+      return !q || (p.name+' '+p.phone+' '+p.majlis).toLowerCase().indexOf(q)>=0;
+    }).sort(byName);
+    var box = $('peopleList');
+    if(!list.length){
+      box.innerHTML = '<div class="empty">'+(people.length ? 'Nobody matches that.' : 'The list is empty. Add the first person above.')+'</div>';
+      return;
+    }
+    box.innerHTML = list.map(function(p,i){
+      var paid = receipts.some(function(r){ return r.personId===p.id; });
+      return '<div class="p" data-id="'+p.id+'">'
+        + '<div class="top"><span class="who">'+(i+1)+'. '+esc(p.name)+'</span><span class="tag">'+esc(daysLabel(p))+'</span></div>'
+        + '<div class="meta">'+esc(p.phone||'no phone')+(p.majlis?' &middot; '+esc(p.majlis):'')+(paid?' &middot; receipt issued':'')+'</div>'
+        + '<div class="row">'
+        + '<button class="act ghost small" data-a="receipt">Issue receipt</button>'
+        + '<button class="act ghost small" data-a="edit">Edit</button>'
+        + '<button class="act small danger" data-a="del">Remove</button>'
+        + '</div></div>';
+    }).join('');
+  }
+  $('pSearch').addEventListener('input', renderPeople);
+  $('pMajlisFilter').addEventListener('change', renderPeople);
+  $('majlisFilter').addEventListener('change', renderCounts);
+  $('filterChips').addEventListener('click', function(e){
+    var c = e.target.closest('.chip'); if(!c) return;
+    filterDay = c.getAttribute('data-day');
+    Array.prototype.forEach.call(this.querySelectorAll('.chip'), function(b){
+      b.setAttribute('aria-pressed', b===c ? 'true':'false');
+    });
+    renderPeople();
+  });
+  $('peopleList').addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-a]'); if(!btn) return;
+    var id = e.target.closest('.p').getAttribute('data-id');
+    var p = people.find(function(x){ return x.id===id; }); if(!p) return;
+    var a = btn.getAttribute('data-a');
+    if(a==='edit'){
+      editingPerson = p.id;
+      $('pName').value=p.name||''; $('pPhone').value=p.phone||''; $('pMajlis').value=p.majlis||'';
+      $('dFri').checked=!!(p.days&&p.days.fri); $('dSat').checked=!!(p.days&&p.days.sat); $('dSun').checked=!!(p.days&&p.days.sun); syncTicks();
+      $('formTitle').textContent='Edit details';
+      $('pSave').textContent='Save changes';
+      $('pCancel').hidden=false;
+      window.scrollTo(0,0);
+    }
+    if(a==='del'){
+      if(!confirm('Remove '+p.name+' from the list? Any receipt already issued is kept.')) return;
+      people = people.filter(function(x){ return x.id!==id; });
+      saveP(); renderPeople(); toast('Removed from list');
+    }
+    if(a==='receipt'){ newReceiptFor(p); show('tabRec'); }
+  });
+
+  /* ---------- day counts ---------- */
+  function renderCounts(){
+    fillMajlisSelects();
+    var m = exportMajlis();
+    var html = ['fri','sat','sun'].map(function(d){
+      var n = peopleFor(d, m).length;
+      return '<div class="daycount"><strong>'+DAYS[d]+'</strong><span class="n">'+n+' '+(n===1?'person':'people')+'</span></div>';
+    }).join('');
+    var pool = peopleFor('all', m);
+    var all3 = pool.filter(function(p){ return personDays(p).length===3; }).length;
+    html += '<div class="daycount"><strong>'+(m ? esc(majlisLabel(m)) : 'All majalis')+'</strong>'
+         + '<span class="n">'+pool.length+' total &middot; '+all3+' attending all three</span></div>';
+    $('dayCounts').innerHTML = html;
+    $('splitWrap').style.display = m ? 'none' : '';
+  }
+
+  /* ---------- expense lines ---------- */
+  function itemRow(desc, amt){
+    var wrap=document.createElement('div'); wrap.className='item';
+    var d=document.createElement('input'); d.className='desc'; d.placeholder='Description'; d.value=desc||'';
+    var a=document.createElement('input'); a.className='amt'; a.inputMode='decimal'; a.placeholder='0.00'; a.value=amt||'';
+    var x=document.createElement('button'); x.className='del'; x.type='button'; x.innerHTML='&times;';
+    x.setAttribute('aria-label','Remove line');
+    x.addEventListener('click', function(){ wrap.remove(); if(!$('items').children.length) addLine(); recalc(); });
+    a.addEventListener('input', recalc);
+    wrap.appendChild(d); wrap.appendChild(a); wrap.appendChild(x);
+    return wrap;
+  }
+  function addLine(d,a){ $('items').appendChild(itemRow(d,a)); }
+
+  /* days travelling, written onto the fare line */
+  function getRDays(){ return {fri:$('rFri').checked, sat:$('rSat').checked, sun:$('rSun').checked}; }
+  function setRDays(d){
+    $('rFri').checked = !!(d&&d.fri); $('rSat').checked = !!(d&&d.sat); $('rSun').checked = !!(d&&d.sun);
+    syncTicks();
+  }
+  function syncTicks(){
+    Array.prototype.forEach.call(document.querySelectorAll('.days input'), function(cb){
+      cb.parentNode.classList.toggle('ticked', cb.checked);
+    });
+  }
+  function dayText(d){
+    var names = ['fri','sat','sun'].filter(function(k){ return d && d[k]; }).map(function(k){ return DAYS[k]; });
+    if(!names.length) return '';
+    if(names.length===1) return names[0];
+    return names.slice(0,-1).join(', ') + ' & ' + names[names.length-1];
+  }
+  var DAYSUFFIX = /\s*\u2014\s*(Friday|Saturday|Sunday)(,\s*(Friday|Saturday|Sunday))*(\s*&\s*(Friday|Saturday|Sunday))?\s*$/;
+  function applyDays(){
+    var first = $('items').querySelector('.desc'); if(!first) return;
+    var base = first.value.replace(DAYSUFFIX, '').trim();
+    var t = dayText(getRDays());
+    first.value = base && t ? base + ' \u2014 ' + t : (base || (t ? t : ''));
+  }
+  ['rFri','rSat','rSun'].forEach(function(id){ $(id).addEventListener('change', applyDays); });
+  function getItems(){
+    var out=[];
+    Array.prototype.forEach.call($('items').children, function(row){
+      var d=row.querySelector('.desc').value.trim(), a=row.querySelector('.amt').value.trim();
+      if(d||a) out.push({d:d, a:num(a)});
+    });
+    return out;
+  }
+  function total(){ return getItems().reduce(function(s,i){ return s+i.a; },0); }
+  function recalc(){ $('sum').textContent = money(total()); }
+  $('addItem').addEventListener('click', function(){ addLine(); });
+  $('usePreset').addEventListener('click', function(){
+    addLine(settings.presetDesc||'Coach fare', settings.presetAmt||'');
+    applyDays(); recalc();
+  });
+  $('copyTotal').addEventListener('click', function(){ $('fReceived').value = total().toFixed(2); });
+
+  /* ---------- signature ---------- */
+  var cv=$('sig'), cx=cv.getContext('2d'), drawing=false, hasInk=false;
+  function fitCanvas(){
+    var r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+    var data = hasInk ? cv.toDataURL() : null;
+    cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+    cx.setTransform(dpr,0,0,dpr,0,0);
+    cx.lineWidth=2; cx.lineCap='round'; cx.lineJoin='round'; cx.strokeStyle='#15211c';
+    if(data){ var img=new Image(); img.onload=function(){ cx.drawImage(img,0,0,r.width,r.height); }; img.src=data; }
+  }
+  function pos(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+  cv.addEventListener('pointerdown', function(e){ drawing=true; hasInk=true; cv.setPointerCapture(e.pointerId); var p=pos(e); cx.beginPath(); cx.moveTo(p.x,p.y); });
+  cv.addEventListener('pointermove', function(e){ if(!drawing) return; var p=pos(e); cx.lineTo(p.x,p.y); cx.stroke(); });
+  cv.addEventListener('pointerup', function(){ drawing=false; });
+  cv.addEventListener('pointerleave', function(){ drawing=false; });
+  $('clearSig').addEventListener('click', function(){ cx.clearRect(0,0,cv.width,cv.height); hasInk=false; });
+  window.addEventListener('resize', fitCanvas);
+  function sigData(){ return hasInk ? cv.toDataURL('image/png') : ''; }
+  function setSig(url){
+    fitCanvas();
+    if(!url){ hasInk=false; return; }
+    var img=new Image();
+    img.onload=function(){ var r=cv.getBoundingClientRect(); cx.drawImage(img,0,0,r.width,r.height); hasInk=true; };
+    img.src=url;
+  }
+
+  /* ---------- receipt form ---------- */
+  function fillPersonSelect(sel){
+    var s=$('fPerson');
+    s.innerHTML = '<option value="">Type a name below</option>' + people.slice().sort(byName).map(function(p){
+      return '<option value="'+p.id+'">'+esc(p.name)+(p.majlis?' \u2014 '+esc(p.majlis):'')+'</option>';
+    }).join('');
+    s.value = sel || '';
+  }
+  $('fPerson').addEventListener('change', function(){
+    var id = this.value;
+    var p = people.find(function(x){ return x.id===id; });
+    if(!p) return;
+    $('fFrom').value = p.name;
+    setRDays(p.days);
+    applyDays();
+  });
+
+  function blankReceipt(){
+    editingReceipt=null;
+    fillPersonSelect('');
+    $('fFrom').value='';
+    $('fMajlis').value = settings.majlis||'';
+    $('fDate').value = todayISO();
+    $('fMethod').value='Cash';
+    $('fReceived').value='';
+    setRDays(null);
+    $('fApproved').value = settings.approved||'';
+    $('fBy').value = settings.by||'';
+    $('items').innerHTML='';
+    if(settings.presetDesc||settings.presetAmt) addLine(settings.presetDesc, settings.presetAmt); else addLine();
+    recalc();
+    cx.clearRect(0,0,cv.width,cv.height); hasInk=false;
+  }
+  function newReceiptFor(p){
+    blankReceipt();
+    fillPersonSelect(p.id);
+    $('fFrom').value = p.name;
+    setRDays(p.days);
+    applyDays();
+  }
+  function fillReceipt(r){
+    editingReceipt = r.id;
+    fillPersonSelect(r.personId||'');
+    $('fFrom').value=r.from||'';
+    $('fMajlis').value=r.majlis||'';
+    $('fDate').value=r.date||todayISO();
+    $('fMethod').value=r.method||'Cash';
+    $('fReceived').value = r.received!=null ? Number(r.received).toFixed(2) : '';
+    $('fApproved').value=r.approved||'';
+    $('fBy').value=r.by||'';
+    setRDays(r.days);
+    $('items').innerHTML='';
+    (r.items&&r.items.length?r.items:[{d:'',a:''}]).forEach(function(i){
+      addLine(i.d, (i.a===''||i.a==null)?'':Number(i.a).toFixed(2));
+    });
+    recalc(); setSig(r.sig||'');
+  }
+  function readReceipt(){
+    return {
+      id: editingReceipt || ('r'+Date.now()+Math.floor(Math.random()*999)),
+      personId: $('fPerson').value || null,
+      from: $('fFrom').value.trim(),
+      majlis: $('fMajlis').value.trim(),
+      date: $('fDate').value,
+      method: $('fMethod').value,
+      days: getRDays(),
+      received: num($('fReceived').value || total()),
+      items: getItems(),
+      total: total(),
+      approved: $('fApproved').value.trim(),
+      by: $('fBy').value.trim(),
+      sig: sigData(),
+      createdAt: new Date().toISOString()
+    };
+  }
+  function persist(r){
+    var i = receipts.findIndex(function(x){ return x.id===r.id; });
+    if(i>=0) receipts[i]=r; else receipts.unshift(r);
+    saveR(); editingReceipt=r.id; return r;
+  }
+  function validR(r){
+    if(!r.from){ toast('Add the name of the person paying'); $('fFrom').focus(); return false; }
+    if(!r.items.length){ toast('Add at least one expense line'); return false; }
+    return true;
+  }
+  $('btnSave').addEventListener('click', function(){
+    var r=readReceipt(); if(!validR(r)) return;
+    persist(r); toast('Receipt saved for '+r.from); blankReceipt();
+  });
+  $('btnShare').addEventListener('click', function(){
+    var r=readReceipt(); if(!validR(r)) return;
+    persist(r); shareDoc(buildReceiptPDF(r), receiptName(r), 'Receipt for '+r.from,
+      'Receipt for ' + r.from + ' \u2014 ' + money(r.total) + '. Jazakumullah.');
+    blankReceipt();
+  });
+
+  /* ---------- receipt history ---------- */
+  function renderHistory(){
+    var q=($('search').value||'').toLowerCase().trim();
+    var list = receipts.filter(function(r){ return !q || (r.from+' '+(r.majlis||'')).toLowerCase().indexOf(q)>=0; });
+    var box=$('hist');
+    if(!list.length){
+      box.innerHTML='<div class="empty">'+(receipts.length?'No receipts match that.':'No receipts yet. Issue one from the List tab.')+'</div>';
+      return;
+    }
+    box.innerHTML = list.map(function(r){
+      return '<div class="rec" data-id="'+r.id+'">'
+        + '<div class="top"><span class="who">'+esc(r.from||'(no name)')+'</span><span class="amt">'+money(r.total)+'</span></div>'
+        + '<div class="meta">'+esc(ukDate(r.date))+' &middot; '+esc(r.method||'')+(dayText(r.days)?' &middot; '+esc(dayText(r.days)):'')+'</div>'
+        + '<div class="row">'
+        + '<button class="act ghost small" data-a="share">Share PDF</button>'
+        + '<button class="act ghost small" data-a="pdf">Download</button>'
+        + '<button class="act ghost small" data-a="edit">Edit</button>'
+        + '<button class="act small danger" data-a="del">Delete</button>'
+        + '</div></div>';
+    }).join('');
+  }
+  $('search').addEventListener('input', renderHistory);
+  $('hist').addEventListener('click', function(e){
+    var btn=e.target.closest('button[data-a]'); if(!btn) return;
+    var id=e.target.closest('.rec').getAttribute('data-id');
+    var r=receipts.find(function(x){ return x.id===id; }); if(!r) return;
+    var a=btn.getAttribute('data-a');
+    if(a==='share') shareDoc(buildReceiptPDF(r), receiptName(r), 'Receipt for '+r.from,
+      'Receipt for ' + r.from + ' \u2014 ' + money(r.total) + '. Jazakumullah.');
+    if(a==='pdf'){ var d=buildReceiptPDF(r); if(d){ d.save(receiptName(r)); toast('PDF downloaded'); } }
+    if(a==='edit'){ fillReceipt(r); show('tabRec'); }
+    if(a==='del'){
+      if(!confirm('Delete the receipt for '+(r.from||'')+'?')) return;
+      receipts = receipts.filter(function(x){ return x.id!==id; });
+      saveR(); renderHistory(); toast('Receipt deleted');
+    }
+  });
+
+  /* ---------- setup ---------- */
+  function fillSettings(){
+    $('sMajlis').value=settings.majlis||''; $('sApproved').value=settings.approved||'';
+    $('sBy').value=settings.by||''; $('sPresetDesc').value=settings.presetDesc||'';
+    $('sPresetAmt').value=settings.presetAmt||''; $('sEvent').value=settings.event||'';
+  }
+  $('saveSet').addEventListener('click', function(){
+    settings.majlis=$('sMajlis').value.trim();
+    settings.approved=$('sApproved').value.trim();
+    settings.by=$('sBy').value.trim();
+    settings.presetDesc=$('sPresetDesc').value.trim();
+    settings.presetAmt=$('sPresetAmt').value.trim();
+    settings.event=$('sEvent').value.trim();
+    saveS();
+    if(!editingReceipt) blankReceipt();
+    toast('Defaults saved');
+  });
+  $('expJson').addEventListener('click', function(){
+    dl(new Blob([JSON.stringify({settings:settings, people:people, receipts:receipts},null,2)],{type:'application/json'}),
+      'lajna-backup-'+todayISO()+'.json');
+    settings.lastBackup = todayISO(); saveS(); renderStorage();
+    toast('Backup saved to your files');
+  });
+  function csv(rows){
+    return rows.map(function(row){
+      return row.map(function(c){ return '"'+String(c==null?'':c).replace(/"/g,'""')+'"'; }).join(',');
+    }).join('\r\n');
+  }
+  $('expPeopleCsv').addEventListener('click', function(){
+    var rows=[['No.','Name','Phone','Majlis','Friday','Saturday','Sunday']];
+    people.slice().sort(byName).forEach(function(p,i){
+      rows.push([i+1,p.name,p.phone,p.majlis,
+        p.days&&p.days.fri?'Yes':'', p.days&&p.days.sat?'Yes':'', p.days&&p.days.sun?'Yes':'']);
+    });
+    dl(new Blob([csv(rows)],{type:'text/csv'}), 'coach-list-'+todayISO()+'.csv');
+  });
+  $('expCsv').addEventListener('click', function(){
+    var rows=[['Date','Received from','Majlis','Method','Amount received','Total','Approved by','Received by','Items']];
+    receipts.forEach(function(r){
+      rows.push([ukDate(r.date), r.from, r.majlis, r.method, Number(r.received||0).toFixed(2),
+        Number(r.total||0).toFixed(2), r.approved, r.by,
+        (r.items||[]).map(function(i){ return i.d+' '+Number(i.a||0).toFixed(2); }).join('; ')]);
+    });
+    dl(new Blob([csv(rows)],{type:'text/csv'}), 'receipts-'+todayISO()+'.csv');
+  });
+  $('impBtn').addEventListener('click', function(){ $('impFile').click(); });
+  $('impFile').addEventListener('change', function(e){
+    var f=e.target.files[0]; if(!f) return;
+    var fr=new FileReader();
+    fr.onload=function(){
+      try{
+        var data=JSON.parse(fr.result), addedP=0, addedR=0;
+        var pid={}; people.forEach(function(p){ pid[p.id]=1; });
+        (data.people||[]).forEach(function(p){ if(!pid[p.id]){ people.push(p); addedP++; } });
+        var rid={}; receipts.forEach(function(r){ rid[r.id]=1; });
+        (data.receipts||[]).forEach(function(r){ if(!rid[r.id]){ receipts.push(r); addedR++; } });
+        receipts.sort(function(a,b){ return String(b.createdAt||'').localeCompare(String(a.createdAt||'')); });
+        saveP(); saveR();
+        if(data.settings){ settings=Object.assign(settings,data.settings); saveS(); fillSettings(); }
+        toast(addedP+' added to list, '+addedR+' receipts added');
+        renderPeople(); refreshMajlisList();
+      }catch(err){ toast('That file could not be read as a backup'); }
+      e.target.value='';
+    };
+    fr.readAsText(f);
+  });
+
+  /* ---------- PDF: receipt ---------- */
+  function newDoc(){
+    if(!window.jspdf||!window.jspdf.jsPDF){ toast('PDF tool did not load \u2014 check your connection and refresh'); return null; }
+    return new window.jspdf.jsPDF({unit:'mm', format:'a4'});
+  }
+  function receiptName(r){ return 'Receipt-'+safe(r.from)+'-'+(r.date||todayISO())+'.pdf'; }
+
+  function buildReceiptPDF(r){
+    var doc = newDoc(); if(!doc) return null;
+    var L=15, W=180, labelW=62, y=20;
+    doc.setFont('helvetica','normal'); doc.setFontSize(19);
+    doc.text("Lajna Ima'illah Majlis " + (r.majlis||''), 105, y, {align:'center'});
+    y += 8;
+    doc.setDrawColor(40,40,40); doc.setLineWidth(0.3);
+
+    function infoRow(label, value, bold){
+      var h=9.5;
+      doc.rect(L,y,labelW,h); doc.rect(L+labelW,y,W-labelW,h);
+      doc.setFontSize(10.5); doc.setFont('helvetica','normal');
+      doc.text(label, L+2.5, y+6.3);
+      doc.setFont('helvetica', bold?'bold':'normal');
+      doc.text(String(value||''), L+labelW+2.5, y+6.3);
+      doc.setFont('helvetica','normal');
+      y+=h;
+    }
+    infoRow('Date:', ukDate(r.date));
+    infoRow('Received from:', r.from, true);
+    infoRow('Total Amount Received', money(r.received), true);
+    infoRow('Method of Payment:', r.method);
+
+    var amtW=42, detW=W-amtW;
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+    doc.rect(L,y,detW,9.5); doc.rect(L+detW,y,amtW,9.5);
+    doc.text('DETAILS OF EXPENSE', L+2.5, y+6.3);
+    doc.text('AMOUNT', L+detW+2.5, y+6.3);
+    y+=9.5;
+
+    doc.setFont('helvetica','normal');
+    var items=(r.items||[]).slice();
+    while(items.length<8) items.push({d:'', a:null});
+    items.forEach(function(i){
+      var h=8.5;
+      doc.rect(L,y,detW,h); doc.rect(L+detW,y,amtW,h);
+      if(i.d){ doc.text(doc.splitTextToSize(String(i.d), detW-5)[0], L+2.5, y+5.8); }
+      if(i.a!==null&&i.a!==undefined&&i.a!=='') doc.text(money(i.a), L+detW+amtW-2.5, y+5.8, {align:'right'});
+      y+=h;
+    });
+    doc.rect(L,y,detW,9.5); doc.rect(L+detW,y,amtW,9.5);
+    doc.setFont('helvetica','bold');
+    doc.text('TOTAL', L+detW-2.5, y+6.4, {align:'right'});
+    doc.text(money(r.total), L+detW+amtW-2.5, y+6.4, {align:'right'});
+    y += 9.5 + 4;
+
+    doc.setFont('helvetica','normal');
+    infoRow('APPROVED by Majlis President', r.approved);
+    infoRow('Received by:', r.by);
+
+    var sh=20;
+    doc.rect(L,y,labelW,sh); doc.rect(L+labelW,y,W-labelW,sh);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+    doc.text('SIGNATURE:', L+2.5, y+11);
+    doc.setFont('helvetica','normal');
+    if(r.sig){ try{ doc.addImage(r.sig,'PNG', L+labelW+3, y+2.5, 55, 15); }catch(e){} }
+    y += sh + 6;
+
+    doc.setFontSize(8.5); doc.setTextColor(110);
+    doc.text('Issued ' + ukDate(r.date), L, y);
+    doc.setTextColor(0);
+    return doc;
+  }
+
+  /* ---------- PDF: day lists ---------- */
+  function dayPage(doc, day, first, m){
+    var list = peopleFor(day, m).sort(byName);
+    var L=15, y=18;
+    var cols=[14,64,42,60];
+    if(!first) doc.addPage();
+
+    function header(){
+      doc.setFont('helvetica','normal'); doc.setFontSize(17);
+      doc.text("Lajna Ima'illah \u2014 " + DAYS[day] + " coach list", 105, y, {align:'center'});
+      y+=7;
+      doc.setFontSize(10); doc.setTextColor(110);
+      var mName = m ? (m===NOMAJ ? 'No majlis recorded' : 'Majlis ' + m)
+                    : (settings.majlis ? 'Majlis ' + settings.majlis : '');
+      var sub = [settings.event, mName, list.length + (list.length===1?' person':' people')]
+        .filter(Boolean).join('  \u00B7  ');
+      doc.text(sub, 105, y, {align:'center'});
+      doc.setTextColor(0);
+      y+=7;
+      doc.setDrawColor(40,40,40); doc.setLineWidth(0.3);
+      doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+      var x=L;
+      ['No.','Name','Phone','Majlis'].forEach(function(t,i){
+        doc.rect(x,y,cols[i],9);
+        doc.text(t, x+2.5, y+6.1);
+        x+=cols[i];
+      });
+      y+=9;
+      doc.setFont('helvetica','normal');
+    }
+    header();
+
+    if(!list.length){
+      doc.setTextColor(110);
+      doc.text('Nobody on this list for ' + DAYS[day] + ' yet.', L+2.5, y+8);
+      doc.setTextColor(0);
+      return;
+    }
+
+    list.forEach(function(p,i){
+      if(y > 272){ doc.addPage(); y=18; header(); }
+      var h=8.6, x=L;
+      var cells=[String(i+1), p.name||'', p.phone||'', p.majlis||''];
+      cells.forEach(function(t,ci){
+        doc.rect(x,y,cols[ci],h);
+        var fit = doc.splitTextToSize(String(t), cols[ci]-5)[0] || '';
+        doc.text(fit, x+2.5, y+5.9);
+        x+=cols[ci];
+      });
+      y+=h;
+    });
+
+    y+=1;
+    doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+    doc.text('Total on ' + DAYS[day] + (m ? ' \u2014 ' + majlisLabel(m) : '') + ': ' + list.length, L, y+5);
+    doc.setFont('helvetica','normal');
+  }
+
+  function buildListPDF(day){
+    var doc = newDoc(); if(!doc) return null;
+    var first = true;
+    listGroups().forEach(function(g){ dayPage(doc, g.day, first, g.m); first = false; });
+    var n = doc.internal.getNumberOfPages();
+    for(var i=1;i<=n;i++){
+      doc.setPage(i);
+      doc.setFontSize(8.5); doc.setTextColor(110);
+      doc.text('Printed ' + ukDate(todayISO()) + '   Page ' + i + ' of ' + n, 105, 288, {align:'center'});
+      doc.setTextColor(0);
+    }
+    return doc;
+  }
+  var exportDay = 'fri';
+  $('exportDays').addEventListener('click', function(e){
+    var c = e.target.closest('.chip'); if(!c) return;
+    exportDay = c.getAttribute('data-day');
+    Array.prototype.forEach.call(this.querySelectorAll('.chip'), function(b){
+      b.setAttribute('aria-pressed', b===c ? 'true':'false');
+    });
+    renderCounts();
+  });
+  $('splitMajlis').addEventListener('change', renderCounts);
+
+  /* which lists the current choices produce */
+  function listGroups(){
+    var m = exportMajlis();
+    var split = !m && $('splitMajlis').checked;
+    var days = exportDay==='all' ? ['fri','sat','sun'] : [exportDay];
+    var out = [];
+    days.forEach(function(d){
+      if(split){
+        var groups = allMajalis().filter(function(g){ return peopleFor(d, g).length; });
+        if(peopleFor(d, NOMAJ).length) groups.push(NOMAJ);
+        if(!groups.length){ out.push({day:d, m:''}); return; }
+        groups.forEach(function(g){ out.push({day:d, m:g}); });
+      } else {
+        out.push({day:d, m:m});
+      }
+    });
+    return out;
+  }
+
+  function exportTitle(){
+    var m = exportMajlis();
+    return (exportDay==='all' ? 'Coach list, all three days' : DAYS[exportDay] + ' coach list')
+      + (m ? ' \u2014 ' + majlisLabel(m) : '');
+  }
+  function exportBase(){
+    var m = exportMajlis();
+    var who = m ? '-' + safe(m===NOMAJ ? 'no-majlis' : m)
+               : ($('splitMajlis').checked ? '-by-majlis' : '');
+    return (exportDay==='all' ? 'Coach-list-all-days' : 'Coach-list-'+DAYS[exportDay]) + who + '-' + todayISO();
+  }
+
+  /* ---------- Excel: a small xlsx writer, no library, works offline ---------- */
+function xlsxBlob(sheets){
+  var enc = new TextEncoder();
+  function x(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function colRef(i){ var s=''; i=i+1; while(i>0){ var m=(i-1)%26; s=String.fromCharCode(65+m)+s; i=Math.floor((i-m)/26); } return s; }
+  function sheetName(n, used){
+    var s = String(n||'Sheet').replace(/[\[\]\*\/\\\?:]/g,' ').trim().slice(0,31) || 'Sheet';
+    var base=s, i=2; while(used[s.toLowerCase()]){ s = base.slice(0,28)+' '+(i++); }
+    used[s.toLowerCase()]=1; return s;
+  }
+  function cellXml(ref, c){
+    if(c==null || c.v==null || c.v==='') return '';
+    var st = c.b ? ' s="1"' : '';
+    if(c.n) return '<c r="'+ref+'"'+st+'><v>'+Number(c.v)+'</v></c>';
+    return '<c r="'+ref+'" t="inlineStr"'+st+'><is><t xml:space="preserve">'+x(c.v)+'</t></is></c>';
+  }
+  function sheetXml(sh){
+    var cols = (sh.widths||[]).map(function(w,i){
+      return '<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>';
+    }).join('');
+    var rows = (sh.rows||[]).map(function(row, ri){
+      var cells = row.map(function(c, ci){ return cellXml(colRef(ci)+(ri+1), c); }).join('');
+      return '<row r="'+(ri+1)+'">'+cells+'</row>';
+    }).join('');
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+      + (cols ? '<cols>'+cols+'</cols>' : '')
+      + '<sheetData>'+rows+'</sheetData></worksheet>';
+  }
+
+  var used = {};
+  var names = sheets.map(function(s){ return sheetName(s.name, used); });
+
+  var files = [];
+  function add(name, str){ files.push({name:name, data:enc.encode(str)}); }
+
+  add('[Content_Types].xml',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+    + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+    + '<Default Extension="xml" ContentType="application/xml"/>'
+    + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+    + sheets.map(function(s,i){
+        return '<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+      }).join('')
+    + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+    + '</Types>');
+
+  add('_rels/.rels',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+    + '</Relationships>');
+
+  add('xl/workbook.xml',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+    + 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'
+    + names.map(function(n,i){ return '<sheet name="'+x(n)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>'; }).join('')
+    + '</sheets></workbook>');
+
+  add('xl/_rels/workbook.xml.rels',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    + names.map(function(n,i){
+        return '<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>';
+      }).join('')
+    + '<Relationship Id="rId'+(names.length+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+    + '</Relationships>');
+
+  add('xl/styles.xml',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+    + '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font>'
+    + '<font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
+    + '<fills count="2"><fill><patternFill patternType="none"/></fill>'
+    + '<fill><patternFill patternType="gray125"/></fill></fills>'
+    + '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
+    + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+    + '<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+    + '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>'
+    + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
+    + '</styleSheet>');
+
+  sheets.forEach(function(sh,i){ add('xl/worksheets/sheet'+(i+1)+'.xml', sheetXml(sh)); });
+
+  /* zip it, stored (no compression) */
+  var crcT = (function(){
+    var t=[], c, n, k;
+    for(n=0;n<256;n++){ c=n; for(k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1); t[n]=c>>>0; }
+    return t;
+  })();
+  function crc32(b){
+    var c = 0xFFFFFFFF;
+    for(var i=0;i<b.length;i++) c = crcT[(c ^ b[i]) & 0xFF] ^ (c>>>8);
+    return (c ^ 0xFFFFFFFF)>>>0;
+  }
+
+  var d = new Date();
+  var dosTime = ((d.getHours()<<11) | (d.getMinutes()<<5) | (Math.floor(d.getSeconds()/2))) & 0xFFFF;
+  var dosDate = (((d.getFullYear()-1980)<<9) | ((d.getMonth()+1)<<5) | d.getDate()) & 0xFFFF;
+
+  var local = [], central = [], offset = 0;
+  files.forEach(function(f){
+    var nameBytes = enc.encode(f.name), crc = crc32(f.data), len = f.data.length;
+    var lh = new Uint8Array(30 + nameBytes.length);
+    var lv = new DataView(lh.buffer);
+    lv.setUint32(0, 0x04034b50, true); lv.setUint16(4, 20, true); lv.setUint16(6, 0, true);
+    lv.setUint16(8, 0, true); lv.setUint16(10, dosTime, true); lv.setUint16(12, dosDate, true);
+    lv.setUint32(14, crc, true); lv.setUint32(18, len, true); lv.setUint32(22, len, true);
+    lv.setUint16(26, nameBytes.length, true); lv.setUint16(28, 0, true);
+    lh.set(nameBytes, 30);
+    local.push(lh, f.data);
+
+    var ch = new Uint8Array(46 + nameBytes.length);
+    var cvw = new DataView(ch.buffer);
+    cvw.setUint32(0, 0x02014b50, true); cvw.setUint16(4, 20, true); cvw.setUint16(6, 20, true);
+    cvw.setUint16(8, 0, true); cvw.setUint16(10, 0, true);
+    cvw.setUint16(12, dosTime, true); cvw.setUint16(14, dosDate, true);
+    cvw.setUint32(16, crc, true); cvw.setUint32(20, len, true); cvw.setUint32(24, len, true);
+    cvw.setUint16(28, nameBytes.length, true);
+    cvw.setUint32(42, offset, true);
+    ch.set(nameBytes, 46);
+    central.push(ch);
+
+    offset += lh.length + len;
+  });
+
+  var cdSize = central.reduce(function(s,c){ return s + c.length; }, 0);
+  var end = new Uint8Array(22);
+  var ev = new DataView(end.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, files.length, true); ev.setUint16(10, files.length, true);
+  ev.setUint32(12, cdSize, true); ev.setUint32(16, offset, true);
+
+  var parts = local.concat(central); parts.push(end);
+  var totalLen = parts.reduce(function(s,p){ return s + p.length; }, 0);
+  var out = new Uint8Array(totalLen), at = 0;
+  parts.forEach(function(p){ out.set(p, at); at += p.length; });
+
+  return new Blob([out], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+
+  function buildListXLSX(){
+    var sheets = listGroups().map(function(g){
+      var list = peopleFor(g.day, g.m).sort(byName);
+      var heading = DAYS[g.day] + ' coach list' + (g.m ? ' \u2014 ' + majlisLabel(g.m) : '');
+      var sub = [settings.event, settings.majlis ? 'Majlis ' + settings.majlis : '', 'Printed ' + ukDate(todayISO())]
+        .filter(Boolean).join('  \u00B7  ');
+      var rows = [
+        [{v:heading, b:1}],
+        [{v:sub}],
+        [],
+        [{v:'No.',b:1},{v:'Name',b:1},{v:'Phone',b:1},{v:'Majlis',b:1}]
+      ];
+      list.forEach(function(pp,i){
+        rows.push([{v:i+1, n:1}, {v:pp.name||''}, {v:pp.phone||''}, {v:pp.majlis||''}]);
+      });
+      rows.push([]);
+      rows.push([{v:'Total', b:1}, {v:list.length, n:1, b:1}]);
+      return {
+        name: (g.m ? DAYS[g.day].slice(0,3) + ' ' + (g.m===NOMAJ ? 'No majlis' : g.m) : DAYS[g.day]),
+        widths: [6, 30, 18, 22],
+        rows: rows
+      };
+    });
+    if(!sheets.length) return null;
+    return xlsxBlob(sheets);
+  }
+
+  function shareLine(){
+    var n = listGroups().reduce(function(t,g){ return t + peopleFor(g.day, g.m).length; }, 0);
+    return exportTitle() + ' \u2014 ' + n + (n===1?' person':' people')
+      + (settings.event ? ' \u2014 ' + settings.event : '') + '.';
+  }
+  function xlsxOrWarn(){
+    var blob = null;
+    try { blob = buildListXLSX(); } catch(e){ blob = null; }
+    if(!blob) toast('Nothing to export yet');
+    return blob;
+  }
+
+  $('btnPdf').addEventListener('click', function(){
+    var doc = buildListPDF(exportDay); if(!doc) return;
+    doc.save(exportBase() + '.pdf');
+    toast('PDF downloaded');
+  });
+  $('btnXls').addEventListener('click', function(){
+    var blob = xlsxOrWarn(); if(!blob) return;
+    dl(blob, exportBase() + '.xlsx');
+    toast('Excel file downloaded');
+  });
+  $('btnSharePdf').addEventListener('click', function(){
+    var doc = buildListPDF(exportDay); if(!doc) return;
+    shareBlob(doc.output('blob'), exportBase() + '.pdf', exportTitle(), shareLine());
+  });
+  $('btnShareXls').addEventListener('click', function(){
+    var blob = xlsxOrWarn(); if(!blob) return;
+    shareBlob(blob, exportBase() + '.xlsx', exportTitle(), shareLine());
+  });
+
+  /* ---------- dashboard ---------- */
+  function hasReceipt(pp){
+    var nm = String(pp.name||'').toLowerCase();
+    return receipts.some(function(r){
+      return r.personId === pp.id || (!r.personId && String(r.from||'').toLowerCase() === nm);
+    });
+  }
+  function moneyTotals(){
+    var t = {count:receipts.length, sum:0, methods:{}};
+    receipts.forEach(function(r){
+      var v = Number(r.received||r.total||0);
+      t.sum += v;
+      var m = r.method || 'Other';
+      t.methods[m] = (t.methods[m]||0) + v;
+    });
+    return t;
+  }
+  function bar(label, n, max, extra){
+    var pct = max > 0 ? Math.round((n/max)*100) : 0;
+    return '<div class="barrow"><div class="t"><span>'+esc(label)+'</span><span>'+n+(extra?' '+esc(extra):'')+'</span></div>'
+      + '<div class="track"><div class="fill" style="width:'+pct+'%"></div></div></div>';
+  }
+
+  function renderDash(){
+    var m = moneyTotals();
+    var owing = people.filter(function(pp){ return !hasReceipt(pp); });
+    var all3 = people.filter(function(pp){ return personDays(pp).length===3; }).length;
+
+    $('statGrid').innerHTML =
+        '<div class="stat"><div class="n">'+people.length+'</div><div class="l">on the list</div></div>'
+      + '<div class="stat"><div class="n">'+m.count+'</div><div class="l">receipt'+(m.count===1?'':'s')+' issued</div></div>'
+      + '<div class="stat"><div class="n">'+money(m.sum)+'</div><div class="l">collected</div></div>'
+      + '<div class="stat"><div class="n">'+owing.length+'</div><div class="l">no receipt yet</div></div>';
+
+    var counts = ['fri','sat','sun'].map(function(d){ return peopleFor(d).length; });
+    var max = Math.max.apply(null, counts.concat([1]));
+    $('dashDays').innerHTML = ['fri','sat','sun'].map(function(d,i){
+      return bar(DAYS[d], counts[i], max, counts[i]===1?'person':'people');
+    }).join('')
+      + '<p class="note">'+all3+' of '+people.length+' are coming all three days.</p>';
+
+    var ms = allMajalis();
+    if(people.some(function(pp){ return !majlisOf(pp); })) ms.push(NOMAJ);
+    if(!ms.length){
+      $('dashMajlis').innerHTML = '<div class="empty" style="padding:16px 0">Nobody on the list yet.</div>';
+    } else {
+      $('dashMajlis').innerHTML = '<table class="mini"><tr><th>Majlis</th><th class="num">Fri</th>'
+        + '<th class="num">Sat</th><th class="num">Sun</th><th class="num">Total</th></tr>'
+        + ms.map(function(g){
+            return '<tr><td>'+esc(majlisLabel(g))+'</td>'
+              + '<td class="num">'+peopleFor('fri',g).length+'</td>'
+              + '<td class="num">'+peopleFor('sat',g).length+'</td>'
+              + '<td class="num">'+peopleFor('sun',g).length+'</td>'
+              + '<td class="num"><strong>'+peopleFor('all',g).length+'</strong></td></tr>';
+          }).join('')
+        + '</table>';
+    }
+
+    if(!m.count){
+      $('dashMoney').innerHTML = '<div class="empty" style="padding:16px 0">No receipts issued yet.</div>';
+    } else {
+      var keys = Object.keys(m.methods).sort(function(a,b){ return m.methods[b]-m.methods[a]; });
+      $('dashMoney').innerHTML = '<table class="mini">'
+        + keys.map(function(k){
+            return '<tr><td>'+esc(k)+'</td><td class="num">'+money(m.methods[k])+'</td></tr>';
+          }).join('')
+        + '<tr><td><strong>Total</strong></td><td class="num"><strong>'+money(m.sum)+'</strong></td></tr>'
+        + '</table>'
+        + '<p class="note">Average '+money(m.sum/m.count)+' across '+m.count+' receipt'+(m.count===1?'':'s')+'.</p>';
+    }
+
+    if(!people.length){
+      $('dashOwing').innerHTML = '<div class="empty" style="padding:16px 0">Add people to the list first.</div>';
+    } else if(!owing.length){
+      $('dashOwing').innerHTML = '<p class="note" style="margin:0"><span class="ok">Everyone on the list has a receipt.</span></p>';
+    } else {
+      $('dashOwing').innerHTML = owing.slice().sort(byName).slice(0,10).map(function(pp){
+          return '<div class="owe"><span class="nm">'+esc(pp.name)+(pp.majlis?' \u00B7 '+esc(pp.majlis):'')+'</span>'
+            + '<button class="act ghost small" data-owe="'+pp.id+'">Issue</button></div>';
+        }).join('')
+        + (owing.length>10 ? '<p class="note">and '+(owing.length-10)+' more on the List tab.</p>' : '');
+    }
+  }
+  $('dashOwing').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-owe]'); if(!b) return;
+    var pp = people.find(function(x){ return x.id===b.getAttribute('data-owe'); });
+    if(pp){ newReceiptFor(pp); show('tabRec'); }
+  });
+
+  /* ---------- summary PDF ---------- */
+  function buildSummaryPDF(){
+    var doc = newDoc(); if(!doc) return null;
+    var L=15, W=180, y=20;
+    var m = moneyTotals();
+    var owing = people.filter(function(pp){ return !hasReceipt(pp); });
+
+    doc.setFont('helvetica','normal'); doc.setFontSize(18);
+    doc.text("Lajna Ima'illah \u2014 coach overview", 105, y, {align:'center'});
+    y+=7;
+    doc.setFontSize(10); doc.setTextColor(110);
+    doc.text([settings.event, settings.majlis ? 'Majlis '+settings.majlis : '', 'Printed '+ukDate(todayISO())]
+      .filter(Boolean).join('  \u00B7  '), 105, y, {align:'center'});
+    doc.setTextColor(0); y+=10;
+
+    doc.setDrawColor(40,40,40); doc.setLineWidth(0.3);
+    function line(label, value, bold){
+      doc.setFontSize(11);
+      doc.setFont('helvetica','normal'); doc.text(label, L, y);
+      doc.setFont('helvetica', bold?'bold':'normal'); doc.text(String(value), L+W, y, {align:'right'});
+      y+=6.5;
+    }
+    function heading(t){
+      y+=3; doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text(t, L, y);
+      y+=2.5; doc.line(L, y, L+W, y); y+=6; doc.setFont('helvetica','normal');
+    }
+
+    heading('Headcount');
+    ['fri','sat','sun'].forEach(function(d){ line(DAYS[d], peopleFor(d).length); });
+    line('On the list', people.length, true);
+    line('Attending all three days', people.filter(function(pp){ return personDays(pp).length===3; }).length);
+
+    heading('By majlis');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    ['Majlis','Fri','Sat','Sun','Total'].forEach(function(t,i){
+      var xs=[L, L+92, L+114, L+136, L+162];
+      doc.text(t, xs[i] + (i?12:0), y, {align: i?'right':'left'});
+    });
+    y+=5; doc.line(L,y,L+W,y); y+=5.5;
+    doc.setFont('helvetica','normal');
+    var ms = allMajalis();
+    if(people.some(function(pp){ return !majlisOf(pp); })) ms.push(NOMAJ);
+    ms.forEach(function(g){
+      if(y>268){ doc.addPage(); y=20; }
+      doc.setFontSize(10);
+      doc.text(doc.splitTextToSize(majlisLabel(g), 88)[0], L, y);
+      [peopleFor('fri',g).length, peopleFor('sat',g).length, peopleFor('sun',g).length, peopleFor('all',g).length]
+        .forEach(function(n,i){ doc.text(String(n), [L+104, L+126, L+148, L+174][i], y, {align:'right'}); });
+      y+=6;
+    });
+
+    heading('Money');
+    Object.keys(m.methods).forEach(function(k){ line(k, money(m.methods[k])); });
+    line('Receipts issued', m.count);
+    line('Total collected', money(m.sum), true);
+
+    heading('Outstanding');
+    line('Still to be issued a receipt', owing.length, true);
+    if(owing.length){
+      doc.setFontSize(10); doc.setTextColor(110);
+      var names = owing.slice().sort(byName).map(function(pp){ return pp.name; }).join(', ');
+      doc.splitTextToSize(names, W).slice(0,8).forEach(function(t){
+        if(y>276){ doc.addPage(); y=20; }
+        doc.text(t, L, y); y+=5;
+      });
+      doc.setTextColor(0);
+    }
+    return doc;
+  }
+  $('btnSummaryPdf').addEventListener('click', function(){
+    var doc = buildSummaryPDF(); if(!doc) return;
+    doc.save('Coach-overview-'+todayISO()+'.pdf');
+    toast('Summary downloaded');
+  });
+  $('btnSummaryShare').addEventListener('click', function(){
+    var doc = buildSummaryPDF(); if(!doc) return;
+    var m = moneyTotals();
+    shareBlob(doc.output('blob'), 'Coach-overview-'+todayISO()+'.pdf', 'Coach overview',
+      'Coach overview \u2014 ' + people.length + ' on the list, ' + money(m.sum) + ' collected.');
+  });
+
+  /* ---------- sharing ---------- */
+  function shareDoc(doc, name, title, msg){
+    if(!doc) return;
+    shareBlob(doc.output('blob'), name, title, msg);
+  }
+  function shareBlob(blob, name, title, msg){
+    if(!blob) return;
+    var type = /\.xlsx$/i.test(name)
+      ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/pdf';
+    var file=null;
+    try{ file = new File([blob], name, {type:type}); }catch(e){}
+    if(file && navigator.canShare && navigator.canShare({files:[file]}) && navigator.share){
+      navigator.share({files:[file], title:title, text:msg})
+        .then(function(){ toast('Shared'); })
+        .catch(function(err){
+          if(err && err.name==='AbortError') return;
+          dl(blob,name); toast('Sharing unavailable \u2014 PDF downloaded instead');
+        });
+    } else {
+      dl(blob,name);
+      toast('Downloaded \u2014 attach it in WhatsApp');
+      setTimeout(function(){ window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); }, 600);
+    }
+  }
+
+  /* ---------- storage safety ---------- */
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  var persisted = null;
+
+  function daysSince(iso){
+    if(!iso) return null;
+    var d = new Date(iso + 'T00:00:00');
+    if(isNaN(d)) return null;
+    return Math.floor((Date.now() - d.getTime()) / 86400000);
+  }
+
+  function renderStorage(){
+    var box = $('storageInfo'); if(!box) return;
+    var since = daysSince(settings.lastBackup);
+    var lines = [];
+    lines.push('<div>' + people.length + ' on the list &middot; ' + receipts.length + ' receipt' + (receipts.length===1?'':'s') + ' saved on this device.</div>');
+    lines.push('<div style="margin-top:5px">Saving is ' +
+      (canStore ? '<span class="ok">working</span>' : '<span class="bad">blocked by this browser</span>') + '.</div>');
+    if(persisted !== null){
+      lines.push('<div style="margin-top:5px">Protected storage: ' +
+        (persisted ? '<span class="ok">on</span>' : '<span class="bad">off</span>') + '.</div>');
+    }
+    lines.push('<div style="margin-top:5px">Home screen app: ' +
+      (isStandalone ? '<span class="ok">yes</span>' : '<span class="bad">not yet</span>') + '.</div>');
+    lines.push('<div style="margin-top:5px">Last backup: ' +
+      (settings.lastBackup ? ukDate(settings.lastBackup) + (since>0 ? ' (' + since + ' day' + (since===1?'':'s') + ' ago)' : ' (today)')
+                           : '<span class="bad">never</span>') + '.</div>');
+    box.innerHTML = lines.join('');
+  }
+
+  function askPersist(fromButton){
+    if(!navigator.storage || !navigator.storage.persist){
+      persisted = null;
+      if(fromButton) toast('This browser decides on its own \u2014 add to home screen and keep backups');
+      renderStorage();
+      return;
+    }
+    navigator.storage.persisted().then(function(already){
+      if(already){ persisted = true; renderStorage(); if(fromButton) toast('Already protected'); return; }
+      navigator.storage.persist().then(function(ok){
+        persisted = ok; renderStorage();
+        if(fromButton) toast(ok ? 'Data protected on this device'
+          : 'The browser said no \u2014 add to home screen, then try again');
+      });
+    }).catch(function(){ persisted = null; renderStorage(); });
+  }
+  if($('btnPersist')) $('btnPersist').addEventListener('click', function(){ askPersist(true); });
+
+  if($('btnHowInstall')) $('btnHowInstall').addEventListener('click', function(){
+    var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    alert(isStandalone
+      ? 'You are already running the home screen app. Nothing more to do.'
+      : ios
+        ? 'In Safari, tap the Share button at the bottom, scroll down and tap "Add to Home Screen".'
+        : 'In Chrome, tap the three dots at the top right and choose "Install app" or "Add to Home screen".');
+  });
+
+  function backupNudge(){
+    if(!people.length && !receipts.length) return;
+    var since = daysSince(settings.lastBackup);
+    if(since === null) toast('Tip: export a backup from Setup to keep this data safe');
+    else if(since >= 7) toast('Your last backup was ' + since + ' days ago \u2014 export a fresh one');
+  }
+
+  /* ---------- service worker ---------- */
+  if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(function(){});
+    });
+  }
+
+  /* ---------- day tick styling fallback ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll('.days input'), function(cb){
+    var mark = function(){ cb.parentNode.classList.toggle('ticked', cb.checked); };
+    cb.addEventListener('change', mark);
+    mark();
+  });
+
+  /* ---------- boot ---------- */
+  fillSettings();
+  clearPersonForm();
+  blankReceipt();
+  refreshMajlisList();
+  renderPeople();
+  fitCanvas();
+  window.__renderDash = renderDash;
+  show('tabDash');
+  window.__renderStorage = renderStorage;
+  renderStorage();
+  askPersist(false);
+  setTimeout(backupNudge, 1200);
+})();
+</script>
+</body>
+</html>
